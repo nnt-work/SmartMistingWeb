@@ -1499,9 +1499,9 @@ html.light .frosted-glass {
   z-index: 50 !important;
   display: flex !important;
   flex-direction: column !important;
-  width: 368px !important;
-  max-width: calc(100vw - 40px) !important;
-  padding: 10px 14px !important;
+  width: 390px !important;
+  max-width: calc(100vw - 32px) !important;
+  padding: 10px 12px !important;
   gap: 8px !important;
   border-radius: 16px !important;
   user-select: none !important;
@@ -1535,7 +1535,9 @@ html.light .frosted-glass {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 8px !important;
+  gap: 6px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
   white-space: nowrap !important;
 }
 
@@ -1543,9 +1545,9 @@ html.light .frosted-glass {
 .sw-pill-btn {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 5px !important;
-  height: 30px !important;
-  padding: 0 10px !important;
+  gap: 4px !important;
+  height: 28px !important;
+  padding: 0 8px !important;
   border-radius: 9999px !important;
   background: rgba(255, 255, 255, 0.07) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
@@ -1555,6 +1557,9 @@ html.light .frosted-glass {
   font-weight: 600 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  flex-shrink: 1 !important;
 }
 .sw-pill-btn:hover {
   background: rgba(16, 185, 129, 0.16) !important;
@@ -1586,10 +1591,11 @@ html.light .sw-pill-btn .sw-chevron {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
-  max-width: 180px !important;
+  max-width: 120px !important;
 }
 .sw-pill-btn#sw-location-toggle {
-  max-width: 220px !important;
+  max-width: 175px !important;
+  flex-shrink: 1 !important;
 }
 .sw-pill-btn .sw-cond-val {
   color: inherit !important;
@@ -1597,10 +1603,10 @@ html.light .sw-pill-btn .sw-chevron {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
-  max-width: 105px !important;
+  max-width: 90px !important;
 }
 .sw-temp-val {
-  font-size: 12px !important;
+  font-size: 11.5px !important;
   font-weight: 800 !important;
   color: #10B981 !important;
 }
@@ -1879,10 +1885,23 @@ html.light #capsule-conn-badge.offline {
   background: #10B981;
   box-shadow: 0 0 8px #10B981;
   display: inline-block;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+.pulse-dot.online {
+  background: #10B981 !important;
+  box-shadow: 0 0 8px #10B981 !important;
 }
 .pulse-dot.offline {
-  background: #EF4444;
-  box-shadow: 0 0 8px #EF4444;
+  background: #64748b !important;
+  box-shadow: none !important;
+}
+.pulse-dot.warning {
+  background: #F59E0B !important;
+  box-shadow: 0 0 8px #F59E0B !important;
+}
+.pulse-dot.danger {
+  background: #EF4444 !important;
+  box-shadow: 0 0 8px #EF4444 !important;
 }
 
 .capsule-drawer-trigger {
@@ -2732,6 +2751,31 @@ html.light .ai-chat-header {
 .btn-chat-tool:hover {
   background: rgba(255, 255, 255, 0.18) !important;
   color: var(--text-main) !important;
+}
+.btn-chat-tool.btn-chat-close {
+  width: 25px !important;
+  height: 25px !important;
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+  position: relative !important;
+}
+.btn-chat-tool.btn-chat-close:hover {
+  background: rgba(239, 68, 68, 0.90) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6) !important;
+}
+html.light .btn-chat-tool.btn-chat-close {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #dc2626 !important;
+  border: 1px solid rgba(239, 68, 68, 0.30) !important;
+}
+html.light .btn-chat-tool.btn-chat-close:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
 }
 html.light .btn-chat-tool {
   background: rgba(0, 0, 0, 0.06) !important;

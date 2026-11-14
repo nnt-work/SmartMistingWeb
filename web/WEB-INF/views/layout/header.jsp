@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/fontawesome.min.css">
     <!-- Master Luxury Obsidian Stylesheet with Cache Busting -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/garden3d.css?v=36_v34">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=40">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=42">
     
     <script>
         window.contextPath = "${pageContext.request.contextPath}";

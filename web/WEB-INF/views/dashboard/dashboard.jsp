@@ -1748,36 +1748,36 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
             <!-- Floating Stage Controls (Bottom Left) -->
             
         <!-- 1. Precision 3-Tier Time & Weather Card (Top-Left 3D Stage) -->
-        <div class="hud-weather-clock hud-3tier-weather-card frosted-glass" id="hud-weather-clock" style="position: absolute; top: 12px; left: 14px; z-index: 55; width: max-content; width: 350px; min-width: 330px; max-width: 350px; height: auto; display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 10px 12px; border-radius: 14px; box-sizing: border-box; overflow: visible;">
+        <div class="hud-weather-clock hud-3tier-weather-card frosted-glass" id="hud-weather-clock" style="position: absolute; top: 14px; left: 16px; z-index: 55; width: 390px; max-width: calc(100vw - 32px); height: auto; display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 10px 12px; border-radius: 14px; box-sizing: border-box; overflow: visible;">
             <!-- TIER 1: Real-time Digital Clock & Date -->
             <div class="hud-tier1-clock" id="hud-tier1-clock" style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid rgba(148, 163, 184, 0.2); white-space: nowrap;">
                 <div class="sw-time-group" title="System Live Time" style="display: inline-flex; align-items: center; gap: 6px;">
                     <span class="beacon-dot online"></span>
-                    <span id="hud-live-time" class="sw-time-val mono tabular-nums" style="font-size: 14px; font-weight: 700; color: var(--text-main);">07:45:26</span>
+                    <span id="hud-live-time" class="sw-time-val mono tabular-nums" style="font-size: 14px; font-weight: 700; color: var(--text-main);">--:--:--</span>
                 </div>
                 <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">
                     <span class="sw-hairline-sep-v">·</span>
-                    <span id="hud-live-date" class="sw-date-val">SAT, OCT 24</span>
+                    <span id="hud-live-date" class="sw-date-val">LIVE DATE</span>
                 </div>
             </div>
 
             <!-- TIER 2: Live Local Weather & Location Station (Dual Elegant Glass Pills, Zero Squeeze) -->
-            <div class="hud-tier2-weather" id="hud-tier2-weather" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; flex-wrap: nowrap; box-sizing: border-box;">
+            <div class="hud-tier2-weather" id="hud-tier2-weather" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; box-sizing: border-box;">
                 <!-- Location Pill Button -->
-                <button type="button" class="sw-pill-btn" id="sw-location-toggle" onclick="toggleWeatherLocationPicker(event)" title="Change weather location" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.10); color: var(--text-main); cursor: pointer; flex-shrink: 0; box-sizing: border-box; white-space: nowrap; transition: all 0.2s ease;">
+                <button type="button" class="sw-pill-btn" id="sw-location-toggle" onclick="toggleWeatherLocationPicker(event)" title="Change weather location" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.10); color: var(--text-main); cursor: pointer; box-sizing: border-box; white-space: nowrap; transition: all 0.2s ease;">
                     <span class="sw-location-icon" style="font-size: 11px;">📍</span>
                     <span id="hud-location-name" class="sw-location-name" style="font-size: 11px; font-weight: 600; white-space: nowrap;">Ho Chi Minh City</span>
                     <svg viewBox="0 0 24 24" class="sw-location-caret" style="width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2.2; flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
 
                 <!-- Weather Status Pill Button (Unfolds Tier 3) -->
-                <button type="button" class="sw-pill-btn" onclick="toggleDailyForecast(event)" title="View 24h weather forecast" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.10); color: var(--text-main); cursor: pointer; flex-shrink: 0; justify-content: flex-end; box-sizing: border-box; white-space: nowrap; transition: all 0.2s ease;">
+                <button type="button" class="sw-pill-btn" onclick="toggleDailyForecast(event)" title="View 24h weather forecast" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.10); color: var(--text-main); cursor: pointer; justify-content: flex-end; box-sizing: border-box; white-space: nowrap; transition: all 0.2s ease;">
                     <span id="hud-weather-icon-wrap" class="sw-weather-icon" style="display: inline-flex; align-items: center;">
                         <svg viewBox="0 0 24 24" id="hud-weather-svg" class="apple-weather-svg" style="width: 13px; height: 13px; stroke: #f59e0b; fill: none; stroke-width: 2.2;"><circle cx="12" cy="12" r="4.5"></circle><line x1="12" y1="2" x2="12" y2="4.5"></line><line x1="12" y1="19.5" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="6.7" y2="6.7"></line><line x1="17.3" y1="17.3" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="4.5" y2="12"></line><line x1="19.5" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="6.7" y2="17.3"></line><line x1="17.3" y1="6.7" x2="19.07" y2="4.93"></line></svg>
                     </span>
-                    <span id="hud-weather-temp" class="sw-temp-val mono" style="font-size: 11px; font-weight: 700; color: #10b981;">29°C</span>
+                    <span id="hud-weather-temp" class="sw-temp-val mono" style="font-size: 11px; font-weight: 700; color: #10b981;">--°C</span>
                     <span class="sw-bullet" style="opacity: 0.4; font-size: 9px;">·</span>
-                    <span id="hud-weather-condition" class="sw-cond-val" style="font-size: 10.5px; font-weight: 600; white-space: nowrap;">Partly Cloudy</span>
+                    <span id="hud-weather-condition" class="sw-cond-val" style="font-size: 10.5px; font-weight: 600; white-space: nowrap;">Checking...</span>
                     <svg viewBox="0 0 24 24" id="forecast-chevron" class="sw-chevron" style="width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.2; flex-shrink: 0; transition: transform 0.25s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
             </div>
@@ -1991,7 +1991,7 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                     <div class="hex-content">
                         <div class="hex-header-row">
                             <span class="hex-tag">SOIL</span>
-                            <span class="pulse-dot" id="pod-soil-dot" title="Optimal Substrate Hydration"></span>
+                            <span class="pulse-dot offline" id="pod-soil-dot" title="Optimal Substrate Hydration"></span>
                         </div>
                         <div class="hex-metric-row">
                             <span class="bento-val mono hex-val" id="stat-soil-moisture">--</span>
@@ -2011,7 +2011,7 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                     <div class="hex-content">
                         <div class="hex-header-row">
                             <span class="hex-tag">TANK</span>
-                            <span class="pulse-dot" id="pod-tank-dot" style="background: #0284c7; box-shadow: 0 0 8px #0284c7;" title="Reservoir Capacity"></span>
+                            <span class="pulse-dot offline" id="pod-tank-dot" title="Reservoir Capacity"></span>
                         </div>
                         <div class="hex-metric-row">
                             <span class="bento-val mono hex-val" id="stat-tank-val">--</span>
@@ -2035,7 +2035,7 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                     <div class="hex-content">
                         <div class="hex-header-row">
                             <span class="hex-tag">AIR HUM</span>
-                            <span class="pulse-dot" id="pod-rain-dot" style="background: #06b6d4; box-shadow: 0 0 8px #06b6d4;" title="Chamber Humidity"></span>
+                            <span class="pulse-dot offline" id="pod-rain-dot" title="Chamber Humidity"></span>
                         </div>
                         <div class="hex-metric-row">
                             <span class="bento-val mono hex-val" id="stat-air-hum">--</span>
@@ -2060,7 +2060,7 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                     <div class="hex-content">
                         <div class="hex-header-row">
                             <span class="hex-tag">TEMP</span>
-                            <span class="pulse-dot" id="pod-climate-dot" style="background: #f59e0b; box-shadow: 0 0 8px #f59e0b;" title="Thermal Status"></span>
+                            <span class="pulse-dot offline" id="pod-climate-dot" title="Thermal Status"></span>
                         </div>
                         <div class="hex-metric-row">
                             <span class="bento-val mono hex-val" id="stat-air-temp">--</span>
@@ -2083,7 +2083,7 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                     <div class="hex-content">
                         <div class="hex-header-row">
                             <span class="hex-tag">MIST</span>
-                            <span class="pulse-dot" id="pod-pump-dot" title="Mist Pump Status"></span>
+                            <span class="pulse-dot offline" id="pod-pump-dot" title="Mist Pump Status"></span>
                         </div>
                         <div class="hex-metric-row">
                             <span class="bento-val mono hex-val" id="stat-pump-state" aria-live="polite">IDLE</span>
@@ -2291,8 +2291,8 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 <button type="button" class="btn-chat-tool" id="btn-ai-clear" onclick="clearAiChatHistory()" title="Clear Chat History">
 <svg viewBox="0 0 24 24" style="width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.2;"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
 </button>
-<button type="button" class="btn-chat-tool" id="btn-close-chat" onclick="toggleAiChatBot(false)" title="Close Assistant">
-<svg viewBox="0 0 24 24" style="width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.4;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+<button type="button" class="btn-chat-tool btn-chat-close" id="btn-close-chat" onclick="toggleAiChatBot(false)" title="Close Assistant (Esc / Click Outside)">
+<svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
 </button>
 </div>
 </div>
@@ -3369,7 +3369,7 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + city.lat + '&longitude=' + city.lon +
             '&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,uv_index,is_day' +
             '&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,uv_index' +
-            '&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=1';
+            '&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia%2FHo_Chi_Minh&forecast_days=1';
 
         fetch(url)
             .then(res => res.json())
@@ -3451,11 +3451,11 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                 console.warn('Weather fetch fallback engaged:', err);
                 const isHighland = (city.lat > 11.5 && city.lat < 12.5 && city.lon > 108.0 && city.lon < 109.0);
                 const isNorth = (city.lat > 19.0);
-                const fallbackTemp = isHighland ? '19°C' : (isNorth ? '22°C' : '28°C');
+                const fallbackTemp = isHighland ? '20°C' : (isNorth ? '22°C' : '29°C');
                 if (tempEl) tempEl.textContent = fallbackTemp;
-                if (condEl) condEl.textContent = isHighland ? 'Cloudy' : 'Partly Cloudy';
+                if (condEl) condEl.textContent = isHighland ? 'Rain Showers' : 'Partly Cloudy';
                 if (humEl) humEl.textContent = isHighland ? '85%' : '68%';
-                if (rainEl) rainEl.textContent = '10%';
+                if (rainEl) rainEl.textContent = isHighland ? '40%' : '10%';
             });
     }
 

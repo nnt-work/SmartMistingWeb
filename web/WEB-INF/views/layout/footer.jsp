@@ -295,7 +295,7 @@
 <script charset="UTF-8" src="${pageContext.request.contextPath}/js/vendor/three.min.js"></script>
 <script charset="UTF-8" src="${pageContext.request.contextPath}/js/garden3d.js?v=36_v34"></script>
 <!-- Master Core JS Engine with Cache Busting -->
-<script charset="UTF-8" src="${pageContext.request.contextPath}/js/main.js?v=40"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/js/main.js?v=42"></script>
 <script src="${pageContext.request.contextPath}/js/prj-integration.js?v=36_v34"></script>
 </body>
 </html>

@@ -63,6 +63,8 @@ function formatRelativeTime(offsetMinutes) {
 let serialPort = null;
 let serialReader = null;
 let serialKeepReading = true;
+let serialPingTimer = null;
+let readableStreamClosed = null;
 let lastDbSyncTime = 0;
 let simulatedHardwareInterval = null;
 let totalPacketsExchanged = 0;
@@ -144,6 +146,10 @@ function initApp() {
     initDraggableStudioBar();
     if (typeof initDraggableCompanion === 'function') initDraggableCompanion();
     if (typeof initDraggableChatCard === 'function') initDraggableChatCard();
+    if (typeof remotePollTelemetry === 'function') {
+      setTimeout(remotePollTelemetry, 400);
+      setInterval(remotePollTelemetry, 1500);
+    }
     if (typeof startAutonomousFarmerWander === 'function') {
       setTimeout(startAutonomousFarmerWander, 1200);
     }
@@ -1490,20 +1496,28 @@ function executeHardwareConnect(forcedMode) {
 
       startSerialReaderLoop();
 
+      // Continuous keep-alive & fast telemetry sync ping timer (every 2000ms like IOT_HN)
+      if (serialPingTimer) clearInterval(serialPingTimer);
+      serialPingTimer = setInterval(function() {
+        if (AppState.hardwareConnected && serialPort) {
+          sendRawSerialCommand('PING');
+        }
+      }, 2000);
+
       const handshakePromise = new Promise(function(resolve) {
         pendingHandshakeResolve = resolve;
-        // Pulse train to handle Arduino DTR reset and bootloader gracefully
-        setTimeout(function() { sendRawSerialCommand('STATUS'); }, 300);
-        setTimeout(function() { sendRawSerialCommand('PING'); }, 800);
+        // Pulse train to handle Arduino DTR reset and bootloader gracefully (150ms, 450ms, 1000ms, 1800ms)
+        setTimeout(function() { sendRawSerialCommand('STATUS'); }, 150);
+        setTimeout(function() { sendRawSerialCommand('STATUS'); }, 450);
+        setTimeout(function() { sendRawSerialCommand('STATUS'); }, 1000);
         setTimeout(function() { sendRawSerialCommand('STATUS'); }, 1800);
-        setTimeout(function() { sendRawSerialCommand('PING'); }, 2800);
-        // Automatically resolve after 1.5s if port is open - don't block user
+        // Automatically resolve after 2.0s if port is open - don't block user
         setTimeout(function() {
           if (pendingHandshakeResolve) {
             pendingHandshakeResolve = null;
             resolve('OPEN_ESTABLISHED');
           }
-        }, 2200);
+        }, 2000);
       });
 
       return handshakePromise.then(function() {
@@ -1613,43 +1627,37 @@ function onHardwareSuccessfullyConnected(portName, isSimulated = false, connType
   }
 }
 
-function startSerialReaderLoop() {
+async function startSerialReaderLoop() {
+  if (!serialPort || !serialPort.readable) return;
   serialKeepReading = true;
-  const decoder = new TextDecoder();
-  let accumulatedBuffer = '';
 
-  function readNextChunk() {
-    if (!serialKeepReading || !serialReader) return;
-    serialReader.read().then(function(result) {
-      if (result.done) return;
-      if (result.value) {
-        accumulatedBuffer += decoder.decode(result.value, { stream: true });
-        let lines = accumulatedBuffer.split('\n');
-        accumulatedBuffer = lines.pop();
+  try {
+    const textDecoder = new TextDecoderStream();
+    readableStreamClosed = serialPort.readable.pipeTo(textDecoder.writable).catch(function() {});
+    serialReader = textDecoder.readable.getReader();
+
+    let buffer = '';
+    while (serialKeepReading) {
+      const { value, done } = await serialReader.read();
+      if (done) break;
+      if (value) {
+        buffer += value;
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
         for (let i = 0; i < lines.length; i++) {
           const trimmed = lines[i].trim();
-          if (trimmed) {
+          if (trimmed.length > 0) {
             parseIncomingHardwarePacket(trimmed);
           }
         }
       }
-      if (serialKeepReading) {
-        readNextChunk();
-      }
-    }).catch(function(err) {
-      if (serialKeepReading) {
-        console.warn('startSerialReaderLoop chunk error:', err);
-      }
-    });
-  }
-
-  if (serialPort && serialPort.readable) {
-    try {
-      serialReader = serialPort.readable.getReader();
-      readNextChunk();
-    } catch (e) {
-      console.warn('startSerialReaderLoop getReader error:', e);
     }
+  } catch (err) {
+    console.warn('[Serial] Read loop error:', err);
+  } finally {
+    try { if (serialReader) serialReader.releaseLock(); } catch (e) {}
+    serialReader = null;
   }
 }
 
@@ -1762,27 +1770,40 @@ function parseIncomingHardwarePacket(raw) {
         const data = JSON.parse(jsonStr);
 
         // 1. Soil Moisture (% or null if probe disconnected/floating)
+        const isSoilValid = data.soil_ok !== 0 && data.soil_ok !== false && (
+          (data.soil !== undefined && data.soil !== null && !isNaN(data.soil) && Number(data.soil) >= 0) ||
+          (data.soil_moisture !== undefined && data.soil_moisture !== null && !isNaN(data.soil_moisture)) ||
+          (data.humidity !== undefined && data.humidity !== null && !isNaN(data.humidity))
+        );
         let sm = null;
-        if (data.soil !== undefined && data.soil !== null) {
-          sm = parseFloat(data.soil);
-        } else if (data.humidity !== undefined && data.humidity !== null) {
-          sm = parseFloat(data.humidity);
-        } else if (data.sm !== undefined && data.sm !== null) {
-          sm = parseFloat(data.sm);
+        if (isSoilValid) {
+          if (data.soil !== undefined && data.soil !== null) sm = parseFloat(data.soil);
+          else if (data.soil_moisture !== undefined && data.soil_moisture !== null) sm = parseFloat(data.soil_moisture);
+          else if (data.humidity !== undefined && data.humidity !== null) sm = parseFloat(data.humidity);
         }
 
-        // 2. Water Reservoir (% or null)
+        // 2. Water Reservoir (% or null, exactly matching IOT_HN)
+        const isWaterValid = data.water_valid !== 0 && data.water_valid !== false && (
+          (data.water !== undefined && data.water !== null && !isNaN(data.water) && Number(data.water) >= 0) ||
+          (data.water_pct !== undefined && data.water_pct !== null && !isNaN(data.water_pct) && Number(data.water_pct) >= 0)
+        );
         let tk = null;
-        if (data.water !== undefined && data.water !== null) {
+        if (isWaterValid) {
+          tk = (data.water !== undefined && data.water !== null) ? parseFloat(data.water) : parseFloat(data.water_pct);
+        } else if (data.water_ok === 1 || data.water_ok === true) {
+          tk = (data.water !== undefined && data.water !== null) ? parseFloat(data.water) : (data.water_pct != null ? parseFloat(data.water_pct) : 50);
+        } else if (data.water !== undefined && data.water !== null && !isNaN(data.water)) {
           tk = parseFloat(data.water);
-        } else if (data.tk !== undefined && data.tk !== null) {
-          tk = parseFloat(data.tk);
+        } else if (data.water_pct !== undefined && data.water_pct !== null && !isNaN(data.water_pct)) {
+          tk = parseFloat(data.water_pct);
         }
 
         // 3. Actuator Relay / Mist Pump State
         const pmp = (data.pump_on !== undefined) ? Boolean(Number(data.pump_on))
                   : ((data.pump !== undefined) ? Boolean(Number(data.pump))
-                  : ((data.pmp !== undefined) ? Boolean(Number(data.pmp)) : false));
+                  : ((data.relay !== undefined) ? Boolean(Number(data.relay))
+                  : ((data.relay_on !== undefined) ? Boolean(Number(data.relay_on))
+                  : ((data.pmp !== undefined) ? Boolean(Number(data.pmp)) : false))));
 
         // 4. Precipitation / Rain State
         const rn = data.is_raining !== undefined ? Boolean(data.is_raining)
@@ -1812,6 +1833,8 @@ function parseIncomingHardwarePacket(raw) {
           AppState.telemetry.airHumidity = null;
         } else if (data.air_hum !== undefined && data.air_hum !== null && Number.isFinite(Number(data.air_hum))) {
           AppState.telemetry.airHumidity = Number(data.air_hum);
+        } else if (data.air_humidity !== undefined && data.air_humidity !== null && Number.isFinite(Number(data.air_humidity))) {
+          AppState.telemetry.airHumidity = Number(data.air_humidity);
         }
 
         // 7. Dynamic Firmware Thresholds
@@ -1838,7 +1861,18 @@ function parseIncomingHardwarePacket(raw) {
         }
 
         // 9. Hardware Lock Reason
-        if (data.lock_reason) {
+        if (typeof data.stop_reason === 'number') {
+          switch (data.stop_reason) {
+            case 0: AppState.telemetry.lockReason = 'NONE'; break;
+            case 1: AppState.telemetry.lockReason = 'SENSORS'; break;
+            case 2: AppState.telemetry.lockReason = 'DHT'; break;
+            case 3: AppState.telemetry.lockReason = 'TEMP'; break;
+            case 4: AppState.telemetry.lockReason = 'SOIL'; break;
+            case 5: AppState.telemetry.lockReason = 'WATER'; break;
+            case 6: AppState.telemetry.lockReason = 'RH'; break;
+            default: AppState.telemetry.lockReason = 'STOP_' + data.stop_reason; break;
+          }
+        } else if (data.lock_reason) {
           AppState.telemetry.lockReason = data.lock_reason;
         }
 
@@ -2190,24 +2224,32 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
     const activePlant = AppState.plants.find(p => p.id === AppState.activePlantId) || {};
     const minThreshold = activePlant.min != null ? activePlant.min : 50.0;
     let soilColor = '#10B981';
-    let soilDotClass = 'micro-status-indicator ' + (AppState.hardwareConnected ? 'live' : 'offline');
+    let soilDotClass = 'pulse-dot ' + (AppState.hardwareConnected ? 'online' : 'offline');
     if (validSm < 25) {
       soilColor = '#A91B0D';
-      soilDotClass = 'micro-status-indicator offline';
+      soilDotClass = 'pulse-dot danger';
     } else if (validSm < minThreshold) {
       soilColor = '#FFDF80';
-      soilDotClass = 'micro-status-indicator warning';
+      soilDotClass = 'pulse-dot warning';
     }
     if (soilBar) soilBar.style.backgroundColor = soilColor;
     if (soilVal) soilVal.style.color = (validSm < 25) ? '#A91B0D' : ((validSm < minThreshold) ? '#FFDF80' : 'var(--text-main)');
-    if (podSoilDot) podSoilDot.className = soilDotClass;
+    if (podSoilDot) {
+      podSoilDot.className = soilDotClass;
+      podSoilDot.style.background = '';
+      podSoilDot.style.boxShadow = '';
+    }
   } else {
     if (soilVal) {
       soilVal.textContent = '--';
       soilVal.style.color = 'var(--text-muted)';
     }
     if (soilBar) soilBar.style.width = '0%';
-    if (podSoilDot) podSoilDot.className = 'micro-status-indicator offline';
+    if (podSoilDot) {
+      podSoilDot.className = 'pulse-dot offline';
+      podSoilDot.style.background = '';
+      podSoilDot.style.boxShadow = '';
+    }
   }
 
   const tankVal = document.getElementById('stat-tank-val');
@@ -2225,17 +2267,21 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
       podTankGauge.style.strokeDashoffset = String(140 - (validTk / 100) * 140);
     }
     let tankColor = '#0284C7';
-    let tankDotClass = 'micro-status-indicator ' + (AppState.hardwareConnected ? 'live' : 'offline');
+    let tankDotClass = 'pulse-dot ' + (AppState.hardwareConnected ? 'online' : 'offline');
     if (validTk <= 20) {
       tankColor = '#A91B0D';
-      tankDotClass = 'micro-status-indicator offline';
+      tankDotClass = 'pulse-dot danger';
     } else if (validTk <= 40) {
       tankColor = '#FFDF80';
-      tankDotClass = 'micro-status-indicator warning';
+      tankDotClass = 'pulse-dot warning';
     }
     if (tankBar) tankBar.style.backgroundColor = tankColor;
     if (tankVal) tankVal.style.color = (validTk <= 20) ? '#A91B0D' : ((validTk <= 40) ? '#FFDF80' : 'var(--text-main)');
-    if (podTankDot) podTankDot.className = tankDotClass;
+    if (podTankDot) {
+      podTankDot.className = tankDotClass;
+      podTankDot.style.background = '';
+      podTankDot.style.boxShadow = '';
+    }
   } else {
     if (tankVal) {
       tankVal.textContent = '--';
@@ -2243,17 +2289,27 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
     }
     if (waterTube) waterTube.style.height = '0%';
     if (tankBar) tankBar.style.width = '0%';
-    if (podTankDot) podTankDot.className = 'micro-status-indicator offline';
+    if (podTankDot) {
+      podTankDot.className = 'pulse-dot offline';
+      podTankDot.style.background = '';
+      podTankDot.style.boxShadow = '';
+    }
   }
 
   const airHumEl = document.getElementById('stat-air-hum');
   const curHum = AppState.telemetry.airHumidity;
+  const podRainDot = document.getElementById('pod-rain-dot');
   if (airHumEl) {
     airHumEl.textContent = Number.isFinite(curHum) ? curHum.toFixed(1) : '--';
     airHumEl.style.color = Number.isFinite(curHum) ? 'var(--text-main)' : 'var(--text-muted)';
   }
   const airHumBar = document.getElementById('pod-air-hum-bar');
   if (airHumBar) airHumBar.style.width = Number.isFinite(curHum) ? `${Math.max(0, Math.min(100, curHum))}%` : '0%';
+  if (podRainDot) {
+    podRainDot.className = 'pulse-dot ' + (AppState.hardwareConnected && Number.isFinite(curHum) ? 'online' : 'offline');
+    podRainDot.style.background = '';
+    podRainDot.style.boxShadow = '';
+  }
 
   const isCriticalDryManual = (AppState.systemMode === 'MANUAL' && validSm !== null && validSm < 20 && AppState.hardwareConnected);
   const appContainer = document.getElementById('app-container');
@@ -2272,13 +2328,9 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
 
   const rainVal = document.getElementById('stat-rain-state');
   const rainBadge = document.getElementById('pod-rain-badge');
-  const podRainDot = document.getElementById('pod-rain-dot');
   if (rainVal) {
     rainVal.textContent = rn ? 'RAIN' : 'DRY';
     rainVal.style.color = rn ? 'var(--accent-sky)' : 'var(--text-main)';
-  }
-  if (podRainDot) {
-    podRainDot.className = 'micro-status-indicator ' + (rn ? 'live' : (AppState.hardwareConnected ? '' : 'offline'));
   }
   if (rainBadge) {
     rainBadge.textContent = rn ? 'RAIN LOCK' : 'CLEAR (DRY)';
@@ -2297,7 +2349,9 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
       statPump.style.color = 'var(--accent-emerald)';
     }
     if (podPumpDot) {
-      podPumpDot.className = 'micro-status-indicator ' + (AppState.hardwareConnected ? 'live' : 'offline');
+      podPumpDot.className = 'pulse-dot ' + (AppState.hardwareConnected ? 'online' : 'offline');
+      podPumpDot.style.background = '';
+      podPumpDot.style.boxShadow = '';
     }
     if (miniPump && miniPumpLabel) {
       miniPump.classList.add('pumping');
@@ -2332,7 +2386,9 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
       }
     }
     if (podPumpDot) {
-      podPumpDot.className = 'micro-status-indicator ' + (AppState.hardwareConnected ? '' : 'offline');
+      podPumpDot.className = 'pulse-dot ' + (AppState.hardwareConnected ? 'offline' : 'offline');
+      podPumpDot.style.background = '';
+      podPumpDot.style.boxShadow = '';
     }
   }
 
@@ -2345,7 +2401,11 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
       airTemp.textContent = resolvedTemp.toFixed(1);
       airTemp.style.color = 'var(--text-main)';
     }
-    if (podClimateDot) podClimateDot.className = 'micro-status-indicator online';
+    if (podClimateDot) {
+      podClimateDot.className = 'pulse-dot ' + (AppState.hardwareConnected ? 'online' : 'offline');
+      podClimateDot.style.background = '';
+      podClimateDot.style.boxShadow = '';
+    }
     if (airSubtext) airSubtext.textContent = '';
     const tempBar = document.getElementById('pod-temp-bar');
     if (tempBar) tempBar.style.width = `${Math.max(0, Math.min(100, resolvedTemp / 50 * 100))}%`;
@@ -2354,7 +2414,11 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
       airTemp.textContent = '--';
       airTemp.style.color = 'var(--text-muted)';
     }
-    if (podClimateDot) podClimateDot.className = 'micro-status-indicator offline';
+    if (podClimateDot) {
+      podClimateDot.className = 'pulse-dot offline';
+      podClimateDot.style.background = '';
+      podClimateDot.style.boxShadow = '';
+    }
     if (airSubtext) airSubtext.textContent = '';
     const tempBar = document.getElementById('pod-temp-bar');
     if (tempBar) tempBar.style.width = '0%';
@@ -2491,6 +2555,42 @@ function syncTelemetryToBackend(sm, tk, rn, pmp) {
   }).catch(() => {});
 }
 
+let remotePollTimer = null;
+async function remotePollTelemetry() {
+  // If this tab already holds an active physical WebSerial port connection, no need to poll
+  if (AppState.hardwareConnected && !AppState.isSimulated && serialPort) return;
+  try {
+    const ctx = window.contextPath || '';
+    const res = await fetch(`${ctx}/api/sensor?device_id=1&t=${Date.now()}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && (data.online || data.telemetry_live)) {
+      const soil = data.soil_moisture != null ? data.soil_moisture : (data.soil != null ? data.soil : data.humidity_pct);
+      const airHum = data.air_hum != null ? data.air_hum : data.air_humidity;
+      const airTemp = data.air_temp;
+      const waterPct = (data.water != null) ? data.water : data.water_pct;
+      const relayOn = !!data.pump_on || !!data.relay_on;
+
+      AppState.hardwareConnected = true;
+      AppState.isSimulated = false;
+      AppState.connectionType = 'SERVER_BRIDGE';
+      if (data.mode) AppState.systemMode = data.mode.toUpperCase();
+      if (airTemp != null) {
+        AppState.telemetry.airTemperature = Number(airTemp);
+        AppState.telemetry.temperature = Number(airTemp);
+      }
+      if (airHum != null) {
+        AppState.telemetry.airHumidity = Number(airHum);
+      }
+      applyTelemetryUpdate(soil, waterPct, false, relayOn);
+      updateHardwareConnectionUI(true, false, 'Server Telemetry Bridge', 'SERVER_BRIDGE');
+    }
+  } catch (e) {
+    // quiet
+  }
+}
+window.remotePollTelemetry = remotePollTelemetry;
+
 function triggerHardwarePumpTest() {
   if (!AppState.hardwareConnected) {
     showToast('Action blocked: Please connect hardware or run Demo Simulation first', 'amber');
@@ -2547,6 +2647,11 @@ function toggleLowWaterLockout() {
 function disconnectHardware(silent) {
   if (silent === undefined) silent = false;
   if (!AppState.hardwareConnected && !serialPort) return Promise.resolve();
+
+  if (serialPingTimer) {
+    clearInterval(serialPingTimer);
+    serialPingTimer = null;
+  }
 
   if (AppState.isPumpActive) {
     handleStopPump('DISCONNECT_SAFETY_STOP');
@@ -5272,7 +5377,7 @@ window.DashboardController = {
     if (locNameEl && cityName) locNameEl.textContent = cityName;
     if (!tempEl || !condEl) return;
 
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + activeWeatherCity.lat + '&longitude=' + activeWeatherCity.lon + '&current=temperature_2m,relative_humidity_2m,weather_code,is_day&hourly=temperature_2m,relative_humidity_2m,weather_code,uv_index&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto';
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + activeWeatherCity.lat + '&longitude=' + activeWeatherCity.lon + '&current=temperature_2m,relative_humidity_2m,weather_code,is_day&hourly=temperature_2m,relative_humidity_2m,weather_code,uv_index&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=Asia%2FHo_Chi_Minh';
 
     const ac = new AbortController();
     const toId = setTimeout(() => ac.abort(), 8000);
@@ -5327,22 +5432,29 @@ window.DashboardController = {
           rainProbEl.textContent = Math.round(data.daily.precipitation_probability_max[0] || 15) + '%';
         }
 
-        // Synchronize forecast milestones strictly around curTemp to eliminate discrepancies
+        // Real hourly forecast milestones from Open-Meteo
         const m08 = document.getElementById('ms-temp-08');
         const m12 = document.getElementById('ms-temp-12');
         const m16 = document.getElementById('ms-temp-16');
         const m20 = document.getElementById('ms-temp-20');
-        if (m08) m08.textContent = Math.max(16, curTemp - 2) + '\u00B0C';
-        if (m12) m12.textContent = Math.max(18, curTemp + 2) + '\u00B0C';
-        if (m16) m16.textContent = Math.max(17, curTemp + 1) + '\u00B0C';
-        if (m20) m20.textContent = Math.max(15, curTemp - 3) + '\u00B0C';
+        if (data.hourly && data.hourly.temperature_2m && data.hourly.temperature_2m.length >= 24) {
+          if (m08) m08.textContent = Math.round(data.hourly.temperature_2m[8]) + '\u00B0C';
+          if (m12) m12.textContent = Math.round(data.hourly.temperature_2m[12]) + '\u00B0C';
+          if (m16) m16.textContent = Math.round(data.hourly.temperature_2m[16]) + '\u00B0C';
+          if (m20) m20.textContent = Math.round(data.hourly.temperature_2m[20]) + '\u00B0C';
+        } else {
+          if (m08) m08.textContent = Math.max(16, curTemp - 2) + '\u00B0C';
+          if (m12) m12.textContent = Math.max(18, curTemp + 2) + '\u00B0C';
+          if (m16) m16.textContent = Math.max(17, curTemp + 1) + '\u00B0C';
+          if (m20) m20.textContent = Math.max(15, curTemp - 3) + '\u00B0C';
+        }
       })
       .catch(err => {
         const isHighland = (activeWeatherCity.lat > 11.5 && activeWeatherCity.lat < 12.5 && activeWeatherCity.lon > 108.0 && activeWeatherCity.lon < 109.0);
         const isNorth = (activeWeatherCity.lat > 19.0);
-        const fallbackTemp = isHighland ? 19 : (isNorth ? 22 : 28);
+        const fallbackTemp = isHighland ? 20 : (isNorth ? 22 : 29);
         tempEl.textContent = fallbackTemp + '\u00B0C';
-        condEl.textContent = isHighland ? 'Cloudy' : 'Partly Cloudy';
+        condEl.textContent = isHighland ? 'Rain Showers' : 'Partly Cloudy';
         if (rangeEl) rangeEl.textContent = 'Forecast: ' + (fallbackTemp - 3) + '\u00B0\u2013' + (fallbackTemp + 4) + '\u00B0C';
         const m08 = document.getElementById('ms-temp-08');
         const m12 = document.getElementById('ms-temp-12');
@@ -5672,12 +5784,13 @@ function toggleAiChatBot(forceState) {
 
   const companion = document.getElementById('ai-farmer-companion');
   if (companion) {
+    companion.style.display = 'flex';
+    companion.style.opacity = '1';
+    companion.style.pointerEvents = 'auto';
     if (isOpening) {
-      companion.style.display = 'none';
+      companion.classList.add('chat-active');
     } else {
-      companion.style.display = 'flex';
-      companion.style.opacity = '1';
-      companion.style.pointerEvents = 'auto';
+      companion.classList.remove('chat-active');
     }
   }
 }
@@ -6437,6 +6550,46 @@ function initDraggableChatCard() {
   const card = document.getElementById('ai-chat-card');
   const header = document.querySelector('#ai-chat-card .ai-chat-header');
   if (!card || !header) return;
+
+  const btnClose = document.getElementById('btn-close-chat');
+  if (btnClose && !btnClose._boundClose) {
+    btnClose._boundClose = true;
+    btnClose.addEventListener('pointerdown', (e) => { e.stopPropagation(); });
+    btnClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      toggleAiChatBot(false);
+    });
+  }
+
+  // Global Escape key listener to close chatbot effortlessly
+  if (!window._boundChatEscape) {
+    window._boundChatEscape = true;
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        const c = document.getElementById('ai-chat-card');
+        if (c && c.classList.contains('open')) {
+          toggleAiChatBot(false);
+        }
+      }
+    });
+  }
+
+  // Click / touch outside chatbot card listener to close
+  if (!window._boundChatOutside) {
+    window._boundChatOutside = true;
+    document.addEventListener('pointerdown', (e) => {
+      const c = document.getElementById('ai-chat-card');
+      const comp = document.getElementById('ai-farmer-companion');
+      if (c && c.classList.contains('open')) {
+        const isInsideCard = c.contains(e.target);
+        const isCompanion = comp && comp.contains(e.target);
+        if (!isInsideCard && !isCompanion) {
+          toggleAiChatBot(false);
+        }
+      }
+    });
+  }
 
   let isDragging = false;
   let startX = 0, startY = 0;
