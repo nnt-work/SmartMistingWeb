@@ -42,7 +42,7 @@ public class Config {
                 System.err.println("[Config] Error reading config file: " + e.getMessage());
             }
         } else {
-            // Attempt classpath fallback
+
             try (InputStream in = Config.class.getResourceAsStream("/prj_sm_config.properties")) {
                 if (in != null) {
                     PROPS.load(in);

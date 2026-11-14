@@ -32,7 +32,6 @@ public class UserManagementServlet extends HttpServlet {
             request.setAttribute("searchKeyword", keyword);
             request.setAttribute("selectedRole", roleFilter != null ? roleFilter : "ALL");
 
-            // Pop flash messages if any
             HttpSession session = request.getSession(false);
             if (session != null) {
                 if (session.getAttribute("flashSuccess") != null) {
@@ -120,7 +119,6 @@ public class UserManagementServlet extends HttpServlet {
                     return;
                 }
 
-                // Business rule: Do not demote the last active admin
                 if (target.isAdmin() && !"ADMIN".equalsIgnoreCase(roleCode)) {
                     if (userDAO.countActiveAdmins() <= 1) {
                         session.setAttribute("flashError", "Cannot demote the only remaining active Administrator!");
@@ -150,7 +148,7 @@ public class UserManagementServlet extends HttpServlet {
                 AppUser target = userDAO.getUserById(targetId);
                 if (target != null) {
                     boolean newLockState = !target.isIsLocked();
-                    // Prevent locking last admin
+
                     if (target.isAdmin() && newLockState && userDAO.countActiveAdmins() <= 1) {
                         session.setAttribute("flashError", "Cannot lock the only remaining active Administrator!");
                         response.sendRedirect(request.getContextPath() + "/admin/users");

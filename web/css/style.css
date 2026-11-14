@@ -1,6 +1,4 @@
-/* =========================================================================
-   1. GLOBAL DESIGN TOKENS (OBSIDIAN DARK & ALABASTER TITANIUM LIGHT)
-   ========================================================================= */
+
 :root {
   --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-heading: 'Plus Jakarta Sans', var(--font-ui);
@@ -39,7 +37,6 @@
   --transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* DARK THEME (Apple Luxury Monochrome & Liquid Glass) */
 html.dark {
   --bg-canvas: #030304;
   --bg-canvas-subtle: #08080A;
@@ -65,7 +62,6 @@ html.dark {
   --brand-logo-icon: #10B981;
 }
 
-/* LIGHT THEME (Alabaster & Pearl Studio) */
 html.light {
   --bg-canvas: #F1F5F9;
   --bg-canvas-subtle: #E2E8F0;
@@ -112,7 +108,6 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* LUXURY DARK: Pure Deep Jet-Black OLED Canvas with Subtle Cosmic Star Dust (Zero Green/Cyan Slop) */
 html.dark body {
   background-color: #030304 !important;
   background-image:
@@ -143,13 +138,11 @@ html.light body {
   letter-spacing: -0.01em;
 }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.28); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-emerald); }
 
-/* Frosted Acrylic Cards */
 .glass-card,
 .card {
   background: var(--bg-card);
@@ -167,7 +160,6 @@ html.light body {
   box-shadow: var(--card-shadow), var(--card-glow);
 }
 
-/* Live Beacon Dot */
 .beacon-dot {
   width: 8px;
   height: 8px;
@@ -197,7 +189,6 @@ html.light body {
   100% { transform: scale(2.3); opacity: 0; }
 }
 
-/* Turbine Fan Animation */
 .turbine-fan {
   display: inline-block;
   transform-origin: center;
@@ -210,7 +201,6 @@ html.light body {
   100% { transform: rotate(360deg); }
 }
 
-/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -280,7 +270,6 @@ html.light .btn-glass.active {
 }
 .btn-sm { padding: 5px 11px; font-size: 12px; }
 
-/* Badges */
 .badge-pill {
   display: inline-flex;
   align-items: center;
@@ -305,7 +294,6 @@ html.light .badge-cyan { color: #0E7490; background: rgba(6, 182, 212, 0.14); }
 html.light .badge-amber { color: #B45309; background: rgba(245, 158, 11, 0.14); }
 html.light .badge-crimson { color: #B91C1C; background: rgba(239, 68, 68, 0.12); }
 
-/* Jewel Icon Boxes */
 .jewel-icon-box {
   width: 34px;
   height: 34px;
@@ -354,9 +342,6 @@ html.light .jewel-amber {
   color: #F87171;
 }
 
-/* =========================================================================
-   2. PERSISTENT GLOBAL SHELL (COLLAPSIBLE SIDEBAR & TOPBAR)
-   ========================================================================= */
 #app-container {
   display: flex;
   width: 100vw;
@@ -377,7 +362,6 @@ html.light .jewel-amber {
   transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease;
 }
 
-/* Collapsed Sidebar — Balanced Touch Targets & Larger Icons */
 #app-container.sidebar-collapsed #sidebar {
   width: var(--sidebar-collapsed-w);
 }
@@ -584,7 +568,6 @@ html.light .nav-item.active {
 }
 html.light .nav-item.active svg { stroke: #0F172A; }
 
-/* Sidebar Hardware Pod */
 .sidebar-hardware-pod {
   padding: 12px 14px;
   border-top: 1px solid var(--border-hairline);
@@ -687,7 +670,6 @@ html.light .sidebar-connect-pill.connected {
   margin: 0 !important;
 }
 
-/* Identity Pod & Sign Out */
 .identity-pod {
   padding: 12px 14px;
   border-top: 1px solid var(--border-hairline);
@@ -752,7 +734,6 @@ html.light .sidebar-connect-pill.connected {
   stroke-width: 2.2;
 }
 
-/* Topbar Plant Profile Pill */
 .topbar-plant-pill {
   display: inline-flex;
   align-items: center;
@@ -774,7 +755,6 @@ html.light .topbar-plant-pill {
 .topbar-plant-pill svg { stroke: currentColor !important; }
 .topbar-plant-pill strong { color: currentColor !important; }
 
-/* Workspace & Topbar */
 #workspace {
   flex: 1;
   display: flex;
@@ -835,7 +815,6 @@ html.light .topbar-plant-pill {
   fill: none !important;
 }
 
-/* Bell Notification Anchor, Centering & Status Dot */
 .topbar-notif-anchor {
   position: relative !important;
   display: inline-flex !important;
@@ -864,7 +843,6 @@ html.light .topbar-plant-pill {
   50% { transform: scale(1.35); opacity: 0.75; }
 }
 
-/* ── Protruding Left-Slide Toast Banner (Pops out horizontally from the bell, pushing plant pill to the left) ── */
 .notif-flyout-banner {
   display: inline-flex !important;
   align-items: center !important;
@@ -974,7 +952,6 @@ html.light .notif-flyout-banner.is-active {
   color: var(--text-main);
 }
 
-/* ── 5 Recent Notifications Dropdown (Protruding Left) ── */
 .notif-dropdown-popover {
   position: absolute !important;
   top: calc(100% + 10px) !important;
@@ -1120,9 +1097,6 @@ html.light .active-zone-val { color: #047857; }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* =========================================================================
-   3. TABLES, FORMS, MODALS & SUBPAGES
-   ========================================================================= */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -1174,7 +1148,6 @@ html.light .active-zone-val { color: #047857; }
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
 }
 
-/* History & Settings Subpages */
 .history-tab-group {
   display: inline-flex;
   align-items: center;
@@ -1308,7 +1281,6 @@ html.light .history-tab-btn.active { color: #047857; background: rgba(16, 185, 1
   gap: 12px;
 }
 
-/* Profile Executive Grid */
 .profile-executive-grid {
   display: grid;
   grid-template-columns: 340px 1fr;
@@ -1374,7 +1346,6 @@ html.light .history-tab-btn.active { color: #047857; background: rgba(16, 185, 1
 .profile-detail-row:last-child { border-bottom: none; }
 .profile-detail-label { color: var(--text-muted); font-weight: 500; }
 
-/* Modals & Toasts */
 .modal-backdrop,
 .modal-overlay {
   display: none;
@@ -1441,9 +1412,6 @@ html.dark .liquid-tab.active {
 .liquid-tab-pane { display: none; }
 .liquid-tab-pane.active { display: block; }
 
-/* =========================================================================
-   4. 3D DIGITAL TWIN STAGE, HUD CAPSULES & UNIFIED SQUIRCLE SENSOR CARDS
-   ========================================================================= */
 body:not(.dashboard-active) #digital-twin-viewport,
 body:not(.dashboard-active) #floating-action-capsule,
 body:not(.dashboard-active) #organic-hex-cluster,
@@ -1474,7 +1442,6 @@ body:not(.dashboard-active) #hud-callout-svg {
   box-sizing: border-box !important;
 }
 
-/* Frosted Glass Base for HUD Panels */
 .frosted-glass {
   background: rgba(10, 10, 14, 0.88);
   backdrop-filter: blur(24px) saturate(180%);
@@ -1490,7 +1457,6 @@ html.light .frosted-glass {
   color: #0F172A;
 }
 
-/* ── 4.1. Top-Left 3-Tier Weather & Clock Card (Fixed Light Mode Contrast & Forecast Layout) ── */
 .hud-weather-clock.hud-3tier-weather-card,
 .hud-3tier-weather-card {
   position: absolute !important;
@@ -1541,7 +1507,6 @@ html.light .frosted-glass {
   white-space: nowrap !important;
 }
 
-/* Weather & Location Pill Buttons — High-Contrast in both Dark & Light Modes */
 .sw-pill-btn {
   display: inline-flex !important;
   align-items: center !important;
@@ -1614,7 +1579,6 @@ html.light .sw-temp-val {
   color: #059669 !important;
 }
 
-/* Location Picker Popover */
 .sw-location-popover {
   position: absolute !important;
   top: calc(100% + 8px) !important;
@@ -1667,7 +1631,6 @@ html.light .sw-weather-search-input {
   border-color: #059669 !important;
 }
 
-/* Tier 3: Expandable Forecast inside Weather Card (Fixed Line-Wrap Bug in Image 5) */
 .hud-tier3-forecast {
   border-top: 1px solid rgba(148, 163, 184, 0.18) !important;
   padding-top: 8px !important;
@@ -1731,7 +1694,6 @@ html.light .sw-weather-search-input {
   white-space: nowrap !important;
 }
 
-/* ── 4.2. Top-Center Floating Action Capsule (White Glass in Light Mode / Obsidian Glass in Dark Mode) ── */
 #floating-action-capsule {
   position: absolute;
   top: 14px;
@@ -1767,7 +1729,6 @@ html.dark #floating-action-capsule {
   display: none !important;
 }
 
-/* Quick Spray 10s Button — Distinct Emerald Ring in Both Modes */
 .btn-quick-spray {
   position: relative !important;
   width: 34px !important;
@@ -1997,7 +1958,6 @@ html.light .btn-quick-spray.disabled-lock #quick-spray-counter {
   color: #334155 !important;
 }
 
-/* ── 4.3. Spatial Chamfered Bio-Hexagon Pods (Apple VisionOS / Bio-Tech HUD) ── */
 #organic-hex-cluster,
 .organic-hex-cluster {
   position: fixed !important;
@@ -2026,7 +1986,6 @@ html.light .btn-quick-spray.disabled-lock #quick-spray-counter {
   padding-right: 47px !important;
 }
 
-/* When Bio-Telemetry Deck Opens: Stack into 1 clean vertical column at right: 462px without blocking stage */
 #organic-hex-cluster.telemetry-open,
 body.has-telemetry-open #organic-hex-cluster {
   right: 492px !important;
@@ -2099,7 +2058,6 @@ html.light .hex-pod-shape {
   stroke: rgba(15, 23, 42, 0.14);
 }
 
-/* Uniform 3D Frosted Glass Pod Shapes */
 .hex-pod-shape {
   fill: rgba(14, 14, 20, 0.65) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
@@ -2127,7 +2085,6 @@ html.light .hex-tile.morph-source .hex-pod-shape {
   filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.12)) !important;
 }
 
-/* Crisp Text Metrics inside Pods */
 .hex-val {
   color: #FFFFFF !important;
   font-weight: 800 !important;
@@ -2142,7 +2099,6 @@ html.light .hex-label {
   color: #64748B !important;
 }
 
-/* Circular Gauge Arcs (Deprecated / Cleanly Disabled) */
 .hex-gauge-track,
 .hex-gauge-fill,
 #pod-soil-gauge,
@@ -2150,7 +2106,6 @@ html.light .hex-label {
   display: none !important;
 }
 
-/* Hover: Transform only without rectangular background artifacts */
 .hex-tile:hover {
   transform: translateY(-4px) scale(1.05) !important;
   background: transparent !important;
@@ -2158,7 +2113,6 @@ html.light .hex-label {
   box-shadow: none !important;
 }
 
-/* Active / Popout / Focused: Scale with clean specular SVG highlight */
 .hex-tile.hex-active-popout,
 .hex-tile.morph-source,
 .hex-tile.hex-pulled-out,
@@ -2239,7 +2193,7 @@ html.light #organic-hex-cluster.standby .hex-content span[id^="stat-"] {
 html.light .hex-unit {
   color: #475569 !important;
 }
-/* Minimalist Horizontal Sensor Metric Gauge */
+
 .hex-bar-track {
   width: 48px !important;
   height: 3px !important;
@@ -2269,7 +2223,6 @@ html.light .hex-tile[data-sensor="water"] .hex-bar-fill {
   box-shadow: 0 0 6px rgba(2, 132, 199, 0.4) !important;
 }
 
-/* ── 4.4. Sensor Detail Card (#morph-detail-card) — Positioned Cleanly ABOVE Sensor Row (Zero Overlap!) ── */
 #morph-detail-card,
 .morph-detail-card {
   position: fixed !important;
@@ -2300,7 +2253,6 @@ html.light .morph-detail-card {
   color: #0F172A !important;
 }
 
-/* Shift Detail Card left when Bio-Telemetry Deck is open so it never collides with Drawer */
 body.has-telemetry-open #morph-detail-card,
 body.has-telemetry-open .morph-detail-card {
   right: 605px !important;
@@ -2377,7 +2329,6 @@ body.has-telemetry-open .morph-detail-card {
   gap: 8px;
 }
 
-/* ── 4.5. Bio-Telemetry Deck (#telemetry-drawer) & Zebra-Striped Data Table ── */
 #digital-twin-viewport.telemetry-drawer-open {
   width: calc(100% - 456px) !important;
 }
@@ -2472,7 +2423,6 @@ html.light .tier3-tab-btn.active {
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
 }
 
-/* Live Telemetry Log Table — Clear Row Dividers & Zebra Striping */
 .telemetry-data-table {
   width: 100% !important;
   border-collapse: collapse !important;
@@ -2509,8 +2459,6 @@ html.light .text-emerald { color: #047857 !important; }
 html.light .text-cyan { color: #0284C7 !important; }
 html.light .text-amber { color: #D97706 !important; }
 
-
-/* ── 4.6. Groundskeeper Mascot & Dr. Flora AI Pod (Strict Dual State: Standing Sweeper vs Scooter Rider) ── */
 .ai-farmer-companion {
   position: absolute !important;
   bottom: 18px !important;
@@ -2556,7 +2504,6 @@ body.chat-is-open .ai-farmer-companion {
   overflow: visible !important;
 }
 
-/* ── STRICT DUAL-STATE SEPARATION: Only ONE mascot visible at any time ── */
 .farmer-avatar-btn #farmer-idle-svg,
 .farmer-avatar-btn .farmer-idle-svg {
   display: block !important;
@@ -2566,7 +2513,6 @@ body.chat-is-open .ai-farmer-companion {
   display: none !important;
 }
 
-/* State 2: Scooter Rider active ONLY when is-riding class is applied */
 .farmer-avatar-btn.is-riding #farmer-idle-svg,
 .farmer-avatar-btn.is-riding .farmer-idle-svg,
 #ai-farmer-companion.is-riding #farmer-idle-svg,
@@ -2632,7 +2578,6 @@ body.chat-is-open .ai-farmer-companion {
   border-top-color: rgba(15, 23, 42, 0.92) !important;
 }
 
-/* ── High-Tech Bio-Tech Glass Pod Assistant (#ai-chat-card) ── */
 .ai-chat-card,
 .compact-biotech-pod {
   position: absolute !important;
@@ -2666,7 +2611,6 @@ html.light .compact-biotech-pod {
   display: flex !important;
 }
 
-/* Botanical Watermark */
 .biotech-header-watermark {
   position: absolute !important;
   top: 0 !important;
@@ -2684,7 +2628,6 @@ html.light .compact-biotech-pod {
   pointer-events: none !important;
 }
 
-/* Header */
 .ai-chat-header {
   position: relative !important;
   z-index: 2 !important;
@@ -2784,7 +2727,6 @@ html.light .btn-chat-tool:hover {
   background: rgba(0, 0, 0, 0.12) !important;
 }
 
-/* Slide-down Settings Panel */
 .ai-llm-settings-panel {
   position: relative !important;
   z-index: 2 !important;
@@ -2822,7 +2764,6 @@ html.light .ai-llm-settings-panel {
   box-sizing: border-box !important;
 }
 
-/* Quick Action Chips */
 .ai-prompt-chips {
   position: relative !important;
   z-index: 2 !important;
@@ -2870,7 +2811,6 @@ html.light .ai-llm-settings-panel {
   flex-shrink: 0 !important;
 }
 
-/* Message History Area */
 .ai-chat-messages {
   position: relative !important;
   z-index: 2 !important;
@@ -2940,7 +2880,6 @@ html.light .ai-msg-bot .ai-msg-bubble {
   align-self: flex-end !important;
 }
 
-/* Typing Indicator */
 .ai-typing-indicator {
   position: relative !important;
   z-index: 2 !important;
@@ -2964,7 +2903,6 @@ html.light .ai-msg-bot .ai-msg-bubble {
 .typing-dot:nth-child(2) { animation-delay: -0.16s !important; }
 .typing-dot:nth-child(3) { animation-delay: 0s !important; }
 
-/* Input Form */
 .ai-chat-input-form {
   position: relative !important;
   z-index: 2 !important;
@@ -3017,7 +2955,7 @@ html.light .ai-msg-bot .ai-msg-bubble {
 .ai-chat-send-btn:active {
   transform: scale(0.95) !important;
 }
-/* ── 4.7. Autonomous Wandering & Walking Leg Animation for Dr. Flora Mascot ── */
+
 .ai-farmer-companion.is-walking {
   animation: farmerWalkingBob 0.6s ease-in-out infinite alternate !important;
 }
@@ -3042,8 +2980,6 @@ html.light .ai-msg-bot .ai-msg-bubble {
   100% { transform: rotate(-12deg); }
 }
 
-
-/* Harmonized Spray Duration Slider */
 .spray-range-slider {
   width: 100% !important;
   height: 4px !important;
@@ -3085,7 +3021,6 @@ html.light .spray-range-slider {
   background: rgba(15, 23, 42, 0.15) !important;
 }
 
-/* Demo Active Capsule Badge */
 .badge-connected.demo-sim {
   border-color: rgba(245, 158, 11, 0.5) !important;
   background: rgba(245, 158, 11, 0.12) !important;

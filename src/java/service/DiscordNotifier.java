@@ -10,11 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Enterprise SCADA Discord Notification Dispatcher
- * Dispatches beautifully structured, clean, and highly readable rich embeds.
- * Strictly 100% Professional Industrial IoT English with precise telemetry color coding.
- */
 public class DiscordNotifier implements Notifier {
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy");
@@ -52,11 +47,6 @@ public class DiscordNotifier implements Notifier {
         String description;
         List<EmbedField> fields = new ArrayList<>();
 
-        // 1. Color Palette: Clean, purposeful, professional
-        // Critical: Crimson Red (0xDC2626)
-        // Warning: Amber Gold (0xD97706)
-        // Recovery / Safe: Emerald Green (0x059669)
-        // Information / Mode: Cobalt Blue (0x2563EB)
         switch (level) {
             case CRITICAL:
                 color = 0xDC2626;
@@ -74,7 +64,6 @@ public class DiscordNotifier implements Notifier {
                 break;
         }
 
-        // 2. Structured Content Generation by Event Category
         if (cleanCode.equals("ARDUINO_CONNECTED")) {
             title = "SCADA Telemetry • Hardware Controller Connected";
             description = "The central SCADA host has established a reliable serial communication link with the Arduino hardware controller.";
@@ -273,7 +262,7 @@ public class DiscordNotifier implements Notifier {
     private void sendRawJson(String webhookUrl, String jsonPayload) {
         long now = System.currentTimeMillis();
         long diff = now - lastDiscordPostTime;
-        // Moderate rate-limit spacer (1.2 seconds between outbound POSTs)
+
         if (diff >= 0 && diff < 1200L) {
             try { Thread.sleep(1200L - diff); } catch (InterruptedException ignored) {}
         }
@@ -312,7 +301,7 @@ public class DiscordNotifier implements Notifier {
                 int status = conn.getResponseCode();
                 if (status >= 200 && status < 300) {
                     System.out.println("[DiscordNotifier] Embed delivered successfully (HTTP " + status + ") via " + targetUrl);
-                    return; // Success, exit
+                    return;
                 } else {
                     System.err.println("[DiscordNotifier] HTTP response: " + status + " on " + targetUrl);
                 }

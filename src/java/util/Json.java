@@ -8,7 +8,7 @@ public final class Json {
  public static String stringify(Object x){if(x==null)return "null";if(x instanceof String)return quote((String)x);if(x instanceof Boolean)return x.toString();if(x instanceof Number){double d=((Number)x).doubleValue();return Double.isNaN(d)||Double.isInfinite(d)?"null":x.toString();}StringBuilder b=new StringBuilder();if(x instanceof Map){b.append('{');for(Object k:((Map<?,?>)x).keySet()){if(b.length()>1)b.append(',');b.append(quote(String.valueOf(k))).append(':').append(stringify(((Map<?,?>)x).get(k)));}return b.append('}').toString();}if(x instanceof Iterable){b.append('[');for(Object v:(Iterable<?>)x){if(b.length()>1)b.append(',');b.append(stringify(v));}return b.append(']').toString();}return quote(x.toString());}
  public static Map<String,Object> map(Object... kv){Map<String,Object> m=new LinkedHashMap<>();for(int i=0;i<kv.length;i+=2)m.put((String)kv[i],kv[i+1]);return m;}
  public static void send(HttpServletResponse r,int status,Object value)throws IOException{r.setStatus(status);r.setContentType("application/json;charset=UTF-8");r.getWriter().write(stringify(value));}
- /** Flat telemetry JSON only; nested structures are intentionally outside this API. */
+
  public static Map<String,String> body(HttpServletRequest req)throws IOException{
   Map<String,String> m=new HashMap<>();for(Map.Entry<String,String[]>e:req.getParameterMap().entrySet())if(e.getValue().length>0)m.put(e.getKey(),e.getValue()[0]);
   if(req.getContentType()!=null&&req.getContentType().contains("application/json")){

@@ -11,17 +11,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import service.Notifier.Level;
 
-/**
- * SCADA Industrial IoT Alert State Machine
- * Horticultural Specimen: Ludisia discolor (Jewel Orchid)
- * Features:
- *  - Instant zero-latency dispatch on first incident detection.
- *  - Debounced recovery dispatch when parameters return to nominal thresholds.
- *  - 24/7 alert delivery (no night-time suppression).
- *  - Anti-spam exponential reminder intervals.
- *  - In-memory telemetry timestamping and stream continuity tracking.
- *  - 100% Professional Engineering English.
- */
 public class AlertManager {
 
     public static class RuleState {
@@ -47,7 +36,7 @@ public class AlertManager {
         }
     }
 
-    public static final long RECOVER_HOLD_MS = 5_000L; // 5s stable recovery hold
+    public static final long RECOVER_HOLD_MS = 5_000L;
     public static final int MAX_PER_MINUTE = 15;
 
     private static volatile AlertManager instance;
@@ -56,11 +45,9 @@ public class AlertManager {
     private final Map<String, RuleState> states = new ConcurrentHashMap<>();
     private static final LinkedList<AlertEvent> RECENT_EVENTS = new LinkedList<>();
 
-    // Sliding window rate limiter
     private final Deque<Long> sendTimestamps = new ArrayDeque<>();
     private int aggregatedCount = 0;
 
-    // Telemetry stream continuity
     private volatile long lastTelemetryMs = 0;
     private volatile boolean lastSample = false;
     private volatile boolean intentionalStop = false;
@@ -139,11 +126,6 @@ public class AlertManager {
         return Collections.unmodifiableMap(states);
     }
 
-    /**
-     * Immediate alert evaluation:
-     * Fires immediately on the first occurrence (sent == 0).
-     * Dispatches recovery alert when violation clears and stabilizes.
-     */
     public synchronized void evaluate(String code, Level level, boolean violated, long holdMs, String message) {
         evaluate(code, level, violated, holdMs, message, null);
     }
@@ -161,8 +143,6 @@ public class AlertManager {
             }
             s.message = message;
 
-            // Zero-latency dispatch for the first trigger (sent == 0)
-            // Subsequent reminders respect the reminder gap
             boolean shouldSend = (s.sent == 0) || (now - s.lastSent >= calculateGap(level, s.sent));
             int maxAllowed = (level == Level.CRITICAL) ? 4 : 3;
 
@@ -197,10 +177,9 @@ public class AlertManager {
         boolean isDemo = Config.getBoolean("alert.demo", true);
 
         if (lv == Level.WARN) {
-            return isDemo ? 120_000L : 3600_000L; // 1 hour prod, 2 min demo
+            return isDemo ? 120_000L : 3600_000L;
         }
 
-        // CRITICAL: Reminder 2 at 15m, Reminder 3 at 30m
         long normalMin = (sentCount == 1 ? 15 : 30) * 60_000L;
         return isDemo ? 120_000L : normalMin;
     }

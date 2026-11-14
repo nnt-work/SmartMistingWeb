@@ -48,7 +48,7 @@ public class DashboardServlet extends HttpServlet {
             }
             request.setAttribute("activeNav", activeNav);
 
-            int deviceId = 1; // Default demo device
+            int deviceId = 1;
             String devParam = request.getParameter("device_id");
             if (devParam != null && !devParam.trim().isEmpty()) {
                 try {
@@ -57,7 +57,6 @@ public class DashboardServlet extends HttpServlet {
                 }
             }
 
-            // 1. Get latest sensor telemetry (with safe offline fallback)
             SensorReading latestReading = null;
             try {
                 latestReading = sensorDAO.getLatestReading(deviceId);
@@ -74,7 +73,6 @@ public class DashboardServlet extends HttpServlet {
                 latestReading.setPacketId("DEFAULT");
             }
 
-            // 2. Get misting settings (with safe defaults)
             MistingSetting setting = null;
             try {
                 setting = settingDAO.getSettingByDeviceId(deviceId);
@@ -89,7 +87,6 @@ public class DashboardServlet extends HttpServlet {
                 setting.setDesiredMode("AUTO");
             }
 
-            // 3. Get device info
             Device device = null;
             List<Device> allDevices = new java.util.ArrayList<>();
             try {
@@ -97,19 +94,16 @@ public class DashboardServlet extends HttpServlet {
                 allDevices = deviceDAO.getAllDevices();
             } catch (Exception ignored) {}
 
-            // 4. Get recent readings for chart / table
             List<SensorReading> recentReadings = new java.util.ArrayList<>();
             try {
                 recentReadings = sensorDAO.getRecentReadings(deviceId, 10);
             } catch (Exception ignored) {}
 
-            // 5. Get recent commands
             List<ControlCommand> recentCommands = new java.util.ArrayList<>();
             try {
                 recentCommands = commandDAO.getLatestCommands(deviceId, 5);
             } catch (Exception ignored) {}
 
-            // 6. Quick statistics & full entity collections for console views
             int totalPlants = 0;
             int totalUsers = 0;
             List<Plant> allPlants = new java.util.ArrayList<>();
@@ -124,18 +118,16 @@ public class DashboardServlet extends HttpServlet {
             try { mistingLogs = logDAO.getLogs("MISTING", null, 50); } catch (Exception ignored) {}
             try { if(actor.isAdmin()) auditLogs = logDAO.getLogs("ADMIN", null, 100); } catch (Exception ignored) {}
 
-            // Evaluate system alerts
             boolean alertLowWater   = Boolean.FALSE.equals(latestReading.getWaterOk());
             boolean alertSensorError = !latestReading.isSensorOk();
             boolean alertPumpRunning = latestReading.isPumpOn();
 
-            // Offline detection: if last data received > 5 minutes ago, mark as offline
             boolean alertOffline = false;
             if (latestReading.getReceivedAt() != null) {
                 long diffMs = System.currentTimeMillis() - latestReading.getReceivedAt().getTime();
-                alertOffline = diffMs > 5 * 60 * 1000L; // 5 minutes
+                alertOffline = diffMs > 5 * 60 * 1000L;
             } else {
-                alertOffline = true; // No data ever received
+                alertOffline = true;
             }
 
             request.setAttribute("latestReading", latestReading);

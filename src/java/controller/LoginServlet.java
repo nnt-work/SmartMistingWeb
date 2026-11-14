@@ -55,7 +55,7 @@ public class LoginServlet extends HttpServlet {
             AppUser user = userDAO.login(username.trim(), password);
 
             if (user == null) {
-                // Check if account exists but is locked
+
                 AppUser existing = userDAO.getUserByUsername(username.trim());
                 if (existing != null && existing.isIsLocked()) {
                     request.setAttribute("errorMessage", "Your account is currently locked. Please contact the administrator.");
@@ -74,7 +74,6 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
-            // Create new session
             HttpSession previous = request.getSession(false);
             if (previous != null) previous.invalidate();
             HttpSession session = request.getSession(true);
@@ -84,7 +83,6 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("fullName", user.getFullName());
             session.setAttribute("role", user.getRoleCode());
 
-            // Log activity (guarded for offline capability)
             try {
                 logDAO.log("ADMIN", null, user.getUserId(), null, "LOGIN",
                         "User [" + user.getUsername() + " - " + user.getRoleCode() + "] logged in successfully.");

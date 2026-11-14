@@ -10,7 +10,7 @@ public class ActivityLog {
     private String username;
     private Integer commandId;
     private String eventId;
-    private String logType; // 'MISTING', 'ADMIN'
+    private String logType;
     private String action;
     private String detail;
     private Timestamp occurredAt;

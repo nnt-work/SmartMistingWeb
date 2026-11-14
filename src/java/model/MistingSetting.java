@@ -8,7 +8,7 @@ public class MistingSetting {
     private double humidityOff;
     private int maxRunSec;
     private int cooldownSec;
-    private String desiredMode; // 'AUTO', 'MANUAL'
+    private String desiredMode;
     private int version;
     private Timestamp updatedAt;
 

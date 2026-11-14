@@ -21,10 +21,10 @@
 %>
 
 <aside id="sidebar">
-    <!-- Brand Pod -->
+
     <div class="brand-pod">
         <div class="brand-icon-box" title="Smart Misting IoT">
-            <!-- Unified Botanical Emerald Leaf Logo (No glow, crisp emerald leaf) -->
+
             <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: #10B981; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">
                 <path d="M9 18c6.2 0 12-4.8 12-15-10.2 0-15 5.8-15 12a6.5 6.5 0 0 0 3 3z" style="fill: rgba(16, 185, 129, 0.22); stroke: #10B981;"></path>
                 <path d="M5 21c.5-4.5 2.5-8 7-10" style="stroke: #10B981;"></path>
@@ -37,9 +37,8 @@
         </div>
     </div>
 
-    <!-- Navigation Tree -->
     <div class="nav-scroll">
-        <!-- Operations & Telemetry -->
+
         <div>
             <div class="nav-sec-title">OPERATIONS &amp; TELEMETRY</div>
             <ul class="nav-list">
@@ -62,7 +61,6 @@
             </ul>
         </div>
 
-        <!-- Security & Access -->
         <div>
             <div class="nav-sec-title">SECURITY &amp; ACCESS</div>
             <ul class="nav-list">
@@ -80,7 +78,6 @@
         </div>
     </div>
 
-    <!-- Dedicated Hardware Control Station (Clean Bordered Container Distinct from Logout) -->
     <div class="sidebar-hardware-pod" id="sidebar-hardware-pod">
         <div class="sidebar-hw-card">
             <div class="sidebar-hw-top">
@@ -90,7 +87,7 @@
                 </div>
                 <span class="badge-pill badge-crimson" id="sidebar-hw-status" style="font-size: 9.5px; padding: 1px 7px;">Offline</span>
             </div>
-            <!-- Stacked Clean Connect / Disconnect Action with Hardware Cable/USB Icon -->
+
             <button id="sidebar-connect-btn" class="sidebar-connect-pill disconnected" onclick="if(typeof handleSidebarConnectClick==='function'){handleSidebarConnectClick();}else if(typeof openConnectModal==='function'){openConnectModal();}else{openModal('modal-connect-hardware');}" title="Hardware Connection">
                 <svg viewBox="0 0 24 24" id="sidebar-hw-btn-icon" style="width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.2;">
                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
@@ -101,7 +98,6 @@
         </div>
     </div>
 
-    <!-- Identity Pod with Unified Avatar & Sign Out -->
     <div class="identity-pod">
         <div class="identity-unified-box" onclick="openModal('modal-signout')" title="Sign Out / Account (${sessionScope.user != null ? sessionScope.user.fullName : 'Admin'})">
             <div class="identity-avatar" id="sidebar-avatar-initial">

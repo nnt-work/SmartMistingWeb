@@ -8,7 +8,7 @@ public class AppUser {
     private String passwordHash;
     private String fullName;
     private String email;
-    private String roleCode; // ADMIN, STAFF, VIEWER
+    private String roleCode;
     private boolean isLocked;
     private boolean isDeleted;
     private String statusText;

@@ -169,13 +169,10 @@ public class SensorReading {
         this.isRaining = isRaining;
     }
 
-    // -------------------------------------------------------------------------
-    // DHT11 Ambient Air Climate Sensor fields (Digital-capable A1)
-    // -------------------------------------------------------------------------
-    private Double airTemperature;   // Ambient air temperature in Celsius from DHT11
-    private Double airHumidity;      // Ambient air relative humidity (%) from DHT11
-    private Boolean dhtOk;           // true when DHT11 sensor is returning valid readings
-    private Boolean heatStress;      // true when air temp >= 38 C (thermal override active)
+    private Double airTemperature;
+    private Double airHumidity;
+    private Boolean dhtOk;
+    private Boolean heatStress;
 
     public Double getAirTemperature() { return airTemperature; }
     public void setAirTemperature(Double airTemperature) { this.airTemperature = airTemperature; }

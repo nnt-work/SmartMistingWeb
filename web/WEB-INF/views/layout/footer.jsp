@@ -1,17 +1,11 @@
 <%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
         </div>
-        <!-- End view-viewport -->
+
     </main>
-    <!-- End workspace -->
+
 </div>
-<!-- End app-container -->
 
-<!-- =========================================================================
-     MODALS: HARDWARE LINK, USER MANAGEMENT, PLANT PROFILES, AND AUTH
-     ========================================================================= -->
-
-<!-- Modal: Connect IoT Hardware (Single Connect Button in Ribbon triggers this) -->
 <div class="modal-backdrop" id="modal-connect-hardware">
     <div class="modal-card" style="max-width: 480px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
@@ -27,11 +21,8 @@
             <button class="btn btn-glass btn-sm" onclick="closeModal('modal-connect-hardware')">&times;</button>
         </div>
 
-        
-        <!-- Direct USB Serial Cable Interface (Zero Clutter) -->
         <input type="hidden" id="hw-connect-port" value="USB">
 
-        <!-- TAB 1: Direct USB Serial Cable -->
         <div class="liquid-tab-pane active" id="pane-hw-usb">
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: var(--radius-md); background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.20); margin-bottom: 16px;">
                 <div style="display: flex; align-items: center; gap: 9px;">
@@ -49,22 +40,18 @@
             </div>
         </div>
 
-        <!-- Hidden backward-compatibility elements for tests -->
         <div id="pane-hw-bt" style="display: none;"></div>
         <button type="button" id="btn-confirm-connect-bt" style="display: none;" onclick="executeBluetoothConnect()"></button>
         <button type="button" id="tab-btn-usb" style="display: none;"></button>
         <button type="button" id="tab-btn-bt" style="display: none;"></button>
 
-        <!-- Shared Status Log Box -->
         <div id="hw-connect-status-log" class="status-log-box" style="margin-top: 14px;"></div>
-        
-        <!-- Legacy bridge button for E2E tests -->
+
         <button type="button" id="btn-confirm-connect" style="display: none;" onclick="executeHardwareConnect()"></button>
 
     </div>
 </div>
 
-<!-- Modal: Sole Confirmation Sign Out (Sidebar Identity Pod triggers this) -->
 <div class="modal-backdrop" id="modal-signout">
     <div class="modal-card" style="max-width: 440px;">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
@@ -85,7 +72,6 @@
     </div>
 </div>
 
-<!-- Modal: Safety Confirmation - Switch from AUTO to MANUAL -->
 <div class="modal-backdrop" id="modal-confirm-switch-manual">
     <div class="modal-card" style="max-width: 440px;">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
@@ -110,7 +96,6 @@
     </div>
 </div>
 
-<!-- Modal: Create New User -->
 <div class="modal-backdrop" id="modal-create-user">
     <div class="modal-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
@@ -154,7 +139,6 @@
     </div>
 </div>
 
-<!-- Modal: Edit User -->
 <div class="modal-backdrop" id="modal-edit-user">
     <div class="modal-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
@@ -195,7 +179,6 @@
     </div>
 </div>
 
-<!-- Modal: Add Plant Profile -->
 <div class="modal-backdrop" id="modal-create-plant">
     <div class="modal-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
@@ -241,7 +224,6 @@
     </div>
 </div>
 
-<!-- Modal: Edit Plant Profile -->
 <div class="modal-backdrop" id="modal-edit-plant">
     <div class="modal-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
@@ -289,13 +271,17 @@
     </div>
 </div>
 
-<!-- SweetAlert2 UI Engine -->
-<script charset="UTF-8" src="${pageContext.request.contextPath}/js/sweetalert2.all.min.js"></script>
-<!-- 3D Digital Twin Simulation Engine & Vendor Dependencies -->
-<script charset="UTF-8" src="${pageContext.request.contextPath}/js/vendor/three.min.js"></script>
-<script charset="UTF-8" src="${pageContext.request.contextPath}/js/garden3d.js?v=36_v34"></script>
-<!-- Master Core JS Engine with Cache Busting -->
-<script charset="UTF-8" src="${pageContext.request.contextPath}/js/main.js?v=42"></script>
-<script src="${pageContext.request.contextPath}/js/prj-integration.js?v=36_v34"></script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/js/sweetalert2.all.min.js">
+</script>
+
+<script charset="UTF-8" src="${pageContext.request.contextPath}/js/vendor/three.min.js">
+</script>
+<script charset="UTF-8" src="${pageContext.request.contextPath}/js/garden3d.js?v=36_v34">
+</script>
+
+<script charset="UTF-8" src="${pageContext.request.contextPath}/js/main.js?v=42">
+</script>
+<script src="${pageContext.request.contextPath}/js/prj-integration.js?v=36_v34">
+</script>
 </body>
 </html>

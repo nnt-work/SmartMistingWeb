@@ -1,12 +1,3 @@
-/**
- * =========================================================================================
- * PRJ301 SMART MISTING x IOT SCADA INTEGRATION ENGINE
- * Strictly 100% Professional Industrial IoT English
- * Integrates: Pure Hardware-Driven WebSerial, 2-Way SCADA Command Bridge,
- * Auto/Manual Mode Control, Priority Interlocks, 3D Digital Twin,
- * and PRJ Enterprise Data (Plants, Users, Audit & History Logs).
- * =========================================================================================
- */
 
 'use strict';
 
@@ -65,10 +56,6 @@ if (serialBus) {
   };
 }
 
-/* =========================================================================================
-   1. UTILITIES & TOAST ENGINE (SWEETALERT2 INTEGRATED)
-   ========================================================================================= */
-
 const prjValue = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
 const prjEscape = s => String(s == null ? '--' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -117,10 +104,6 @@ function prjForm(path, values) {
   form.submit();
 }
 
-/* =========================================================================================
-   2. REAL-TIME CLOCK & DRIFT ENGINE (ENGLISH FORMAT)
-   ========================================================================================= */
-
 async function initRealTimeClock() {
   updateClockDisplay();
   setInterval(updateClockDisplay, 1000);
@@ -154,7 +137,6 @@ function updateClockDisplay() {
   if (clockEl) clockEl.textContent = timeStr;
   if (dateEl) dateEl.textContent = dateStr;
 
-  // Live Manual Mode duration count
   if (ScadaState.systemMode === 'MANUAL' && ScadaState.manualStartTime) {
     const elapsedSec = Math.floor((Date.now() - ScadaState.manualStartTime) / 1000);
     const m = Math.floor(elapsedSec / 60);
@@ -165,10 +147,6 @@ function updateClockDisplay() {
     }
   }
 }
-
-/* =========================================================================================
-   3. WEBSERIAL CONNECTION & HARDWARE HANDSHAKE
-   ========================================================================================= */
 
 async function handleConnectSerialClick() {
   if (ScadaState.isConnected) {
@@ -224,7 +202,6 @@ async function executeSerialOpen() {
 
     readSerialLoop(port);
 
-    // Fast sync pulse bursts (150ms, 450ms, 1000ms, 1800ms)
     setTimeout(() => { if (ScadaState.isConnected) sendSerialCommand('STATUS'); }, 150);
     setTimeout(() => { if (ScadaState.isConnected) sendSerialCommand('STATUS'); }, 450);
     setTimeout(() => { if (ScadaState.isConnected) sendSerialCommand('STATUS'); }, 1000);
@@ -305,10 +282,6 @@ async function disconnectSerial() {
 
   showToast('Hardware controller disconnected. System returned to standby.', 'info');
 }
-
-/* =========================================================================================
-   4. INCOMING SERIAL STREAM PARSER
-   ========================================================================================= */
 
 async function readSerialLoop(port) {
   const textDecoder = new TextDecoderStream();
@@ -427,7 +400,6 @@ function processTelemetryPacket(packet) {
   ScadaState.lockReason = lock;
   Prj.lastFrame = packet;
 
-  // Sync to AppState for PRJ301 subsystems
   if (typeof AppState !== 'undefined') {
     AppState.hardwareConnected = true;
     AppState.systemMode = mode;
@@ -445,7 +417,6 @@ function processTelemetryPacket(packet) {
     };
   }
 
-  // Trigger 3D digital twin misting particles
   if (window.Garden3D && typeof window.Garden3D.triggerSpray === 'function') {
     window.Garden3D.triggerSpray(relayOn);
   }
@@ -454,10 +425,6 @@ function processTelemetryPacket(packet) {
   renderTelemetryUI(soil, airHum, airTemp, waterPct, relayOn, mode, lock, packet);
   syncTelemetryToServer(soil, airHum, airTemp, waterPct, relayOn, mode, lock, packet);
 }
-
-/* =========================================================================================
-   5. DASHBOARD UI RENDERING & HEXAGONS (PURE ENGLISH - MATCHES ORIGINAL)
-   ========================================================================================= */
 
 function isTelemetryFresh() {
   return ScadaState.lastValidTelemetryAt != null
@@ -468,7 +435,6 @@ function renderTelemetryUI(soil, airHum, airTemp, waterPct, relayOn, mode, lock,
   const isFresh = isTelemetryFresh();
   const pkt = packet || {};
 
-  // 1. SOIL MOISTURE
   const soilOk = isFresh && (soil != null) && (pkt.soil_ok !== 0);
   const roundedSoil = soilOk ? Math.round(soil) : null;
   const soilValEl = document.getElementById('stat-soil-moisture');
@@ -478,7 +444,6 @@ function renderTelemetryUI(soil, airHum, airTemp, waterPct, relayOn, mode, lock,
   if (soilBarEl) soilBarEl.style.width = (roundedSoil != null) ? Math.min(100, Math.max(0, roundedSoil)) + '%' : '0%';
   if (soilDotEl) soilDotEl.className = 'pulse-dot ' + (soilOk ? 'online' : 'offline');
 
-  // 2. WATER RESERVOIR
   const waterOk = isFresh && (waterPct != null) && (pkt.water_valid !== 0);
   const roundedWater = waterOk ? Math.round(waterPct) : null;
   const tankValEl = document.getElementById('stat-tank-val');
@@ -488,7 +453,6 @@ function renderTelemetryUI(soil, airHum, airTemp, waterPct, relayOn, mode, lock,
   if (tankBarEl) tankBarEl.style.width = (roundedWater != null) ? Math.min(100, Math.max(0, roundedWater)) + '%' : '0%';
   if (tankDotEl) tankDotEl.className = 'pulse-dot ' + (waterOk ? 'online' : 'offline');
 
-  // 3. CHAMBER RELATIVE HUMIDITY (DHT11)
   const dhtOk = isFresh && (pkt.dht_ok !== 0);
   const rhOk = dhtOk && (airHum != null);
   const rhValEl = document.getElementById('stat-air-hum');
@@ -498,7 +462,6 @@ function renderTelemetryUI(soil, airHum, airTemp, waterPct, relayOn, mode, lock,
   if (rhBarEl) rhBarEl.style.width = rhOk ? Math.min(100, Math.max(0, airHum)) + '%' : '0%';
   if (rhDotEl) rhDotEl.className = 'pulse-dot ' + (rhOk ? 'online' : 'offline');
 
-  // 4. AMBIENT TEMPERATURE (DHT11)
   const tempOk = dhtOk && (airTemp != null);
   const tempValEl = document.getElementById('stat-air-temp');
   const tempBarEl = document.getElementById('pod-temp-bar');
@@ -507,7 +470,6 @@ function renderTelemetryUI(soil, airHum, airTemp, waterPct, relayOn, mode, lock,
   if (tempBarEl) tempBarEl.style.width = tempOk ? Math.min(100, Math.max(0, airTemp)) + '%' : '0%';
   if (tempDotEl) tempDotEl.className = 'pulse-dot ' + (tempOk ? 'online' : 'offline');
 
-  // 5. PUMP RELAY STATUS (Matches Original: IDLE / ACTIVE)
   const mistOnline = isFresh && (ScadaState.isConnected || ScadaState.isRemoteActive);
   const pumpStateEl = document.getElementById('stat-pump-state');
   const mistStateEl = document.getElementById('stat-mist-state');
@@ -525,7 +487,6 @@ function renderTelemetryUI(soil, airHum, airTemp, waterPct, relayOn, mode, lock,
   if (pumpBarEl) pumpBarEl.style.width = (mistOnline && relayOn) ? '100%' : '0%';
   if (pumpDotEl) pumpDotEl.className = 'pulse-dot ' + (mistOnline ? (relayOn ? 'active' : 'online') : 'offline');
 
-  // MODE DISPLAY & MANUAL TIMER BANNER
   const btnToggleMode = document.getElementById('btn-toggle-mode');
   const manualBanner = document.getElementById('manual-mode-banner');
 
@@ -545,7 +506,6 @@ function renderTelemetryUI(soil, airHum, airTemp, waterPct, relayOn, mode, lock,
     ScadaState.manualStartTime = null;
   }
 
-  // ACTUATION BUTTONS (START / STOP)
   const isManual = (mode === 'MANUAL');
   const telemetryFresh = isTelemetryFresh();
   const canOperate = (ScadaState.isConnected || ScadaState.isRemoteActive) && telemetryFresh && ScadaState.pendingMode == null && ScadaState.pendingRelay == null;
@@ -595,10 +555,6 @@ function resetTelemetryDisplay() {
   ScadaState.currentTelemetry = { soil: null, airHum: null, airTemp: null, waterPct: null, relayOn: false, lastRxTime: null };
   renderTelemetryUI(null, null, null, null, false, null, null, {});
 }
-
-/* =========================================================================================
-   6. SEND SERIAL COMMANDS & MODE TOGGLE (SWEETALERT2 INTEGRATED - ENGLISH)
-   ========================================================================================= */
 
 async function sendSerialCommand(cmd) {
   if (!ScadaState.serialPort || !ScadaState.isConnected || !ScadaState.serialPort.writable) return false;
@@ -835,10 +791,6 @@ function resolvePendingCommands(relayOn, mode, lock) {
   }
 }
 
-/* =========================================================================================
-   7. SERVER TELEMETRY SYNCHRONIZATION & TWO-WAY SCADA COMMAND BRIDGE
-   ========================================================================================= */
-
 let lastServerSyncMs = 0;
 
 async function syncTelemetryToServer(soil, airHum, airTemp, waterPct, relayOn, mode, lock, packet) {
@@ -997,10 +949,6 @@ async function sendRemoteCommand(cmd) {
     showToast('Command transmission error: ' + err.message, 'error');
   }
 }
-
-/* =========================================================================================
-   8. BOOTSTRAP & WINDOW EXPORTS (SCADA INTEGRATION ONLY - PRESERVES MAIN.JS UI/UX)
-   ========================================================================================= */
 
 document.addEventListener('DOMContentLoaded', () => {
   initRemoteClientSync();

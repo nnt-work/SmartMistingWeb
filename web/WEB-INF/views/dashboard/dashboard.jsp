@@ -8,14 +8,9 @@
     <jsp:param name="activeNav" value="${activeNav != null ? activeNav : 'dashboard'}" />
 </jsp:include>
 
-<!-- ===================================================================
-     VIEW 1: IOT MONITORING & CONTROL DASHBOARD
-     ================================================================== -->
 <div class="view-pane ${activeNav == 'dashboard' || empty activeNav ? 'active' : ''}" id="view-dashboard">
 
-    <!-- Self-Contained High-End Master Styles for Digital Twin 3D Viewport & HUD -->
     <style id="digital-twin-master-css">
-        /* ── Host Layout: Seamless Workspace Embedding ── */
         #view-viewport.viewport-dashboard-active,
         #view-viewport:has(#view-dashboard.active),
         body.dashboard-active #view-viewport {
@@ -26,11 +21,6 @@
             height: calc(100vh - 48px) !important;
         }
 
-        /* =========================================================
-           SPATIAL EMBEDDED DASHBOARD VIEWPORT
-           ========================================================= */
-
-        /* Viewport Pane — strictly hidden on any subpage, active flex on dashboard */
         #view-dashboard:not(.active) {
             display: none !important;
             visibility: hidden !important;
@@ -52,7 +42,6 @@
             z-index: 1;
         }
 
-        /* Viewport Frame — fills workspace cleanly with 20px spatial elevation bevel */
         #digital-twin-viewport {
             position: relative;
             width: 100%;
@@ -102,7 +91,6 @@
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 24px 60px rgba(0, 0, 0, 0.90) !important;
         }
 
-        /* 3D Canvas Container */
         .garden3d {
             position: absolute;
             inset: 0;
@@ -127,7 +115,6 @@
             display: block;
         }
 
-        /* Stage Helper Floating Pill (Bottom-Left) */
         .garden3d-stage-controls {
             position: absolute;
             bottom: 20px;
@@ -176,7 +163,6 @@
             background: rgba(16, 185, 129, 0.15);
         }
 
-        /* 1. Floating Action Capsule (Top-Center) */
         #floating-action-capsule {
             position: fixed;
             top: 16px;
@@ -361,7 +347,6 @@
             color: #10b981;
         }
 
-        /* 2. Organic Hex-Cluster (Bottom-Right Honeycomb) */
         #organic-hex-cluster {
             position: fixed;
             right: 28px;
@@ -374,7 +359,7 @@
             pointer-events: auto;
             user-select: none;
             transition: transform 0.3s ease, opacity 0.3s ease;
-            /* Ambient glow beneath the whole cluster */
+
             filter: none;
         }
         .hex-row {
@@ -524,7 +509,6 @@
             color: var(--text-secondary);
         }
 
-        /* 3. Morphing UI Detail Card */
         #morph-detail-card {
             position: fixed;
             right: 28px;
@@ -616,7 +600,6 @@
             gap: 8px;
         }
 
-        /* 4. Slide-Over Telemetry History Drawer */
         #telemetry-drawer {
             position: fixed;
             right: 0;
@@ -654,7 +637,6 @@
             display: none;
         }
 
-        /* ── MORPH ANIMATION: Card opens from hex with spring ── */
         @keyframes morphCardIn {
             from {
                 opacity: 0;
@@ -675,8 +657,6 @@
             animation: morphCardIn 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        /* ── GLASS HEX TILE: Fix backdrop-filter blocked by clip-path ── */
-        /* Wrapper carries the blur; inner carries the clip-path shape */
         .hex-tile-wrap {
             position: relative;
             width: 78px;
@@ -687,7 +667,6 @@
             display: none !important;
         }
 
-        /* ── ENHANCED MORPH RETURN GHOST ── */
         .morph-return-ghost {
             position: fixed;
             z-index: 9999;
@@ -700,7 +679,6 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(16, 185, 129, 0.15);
         }
 
-        /* ── HEX DOCKED PULSE: bounce on close ── */
         @keyframes hexDockPulse {
             0%   { transform: scale(1); }
             35%  { transform: scale(1.18) rotate(6deg); filter: brightness(1.3); }
@@ -711,7 +689,6 @@
             animation: hexDockPulse 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        /* ── DETAIL CARD: Less opaque, more glass depth ── */
         html.dark #morph-detail-card {
             background: rgba(10, 10, 14, 0.90) !important;
             border: 1px solid rgba(255, 255, 255, 0.14) !important;
@@ -723,7 +700,6 @@
             box-shadow: 0 16px 44px rgba(0, 0, 0, 0.1), 0 0 20px rgba(16, 185, 129, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
         }
 
-        /* ── AGRI ALERT BANNER: Elevated visual hierarchy ── */
         .detail-card-agri-alert {
             border-radius: 10px;
             margin-bottom: 12px;
@@ -732,19 +708,16 @@
             line-height: 1.45;
         }
 
-        /* ── CAPSULE: Reduce height slightly, make more pill-like ── */
         #floating-action-capsule {
             padding: 5px 14px !important;
             gap: 10px !important;
         }
 
-        /* ── STAGE CONTROLS: Make more translucent ── */
         html.dark .garden3d-stage-controls {
             background: rgba(8, 14, 24, 0.7) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
         }
 
-        /* Mobile Adjustments */
         @media (max-width: 768px) {
             #floating-action-capsule {
                 top: 10px;
@@ -767,8 +740,7 @@
                 position: fixed;
             }
         }
-    
-        /* Hide in-scene floating duplicate tag buttons & vertical zoom slider */
+
         .garden3d-label {
             display: none !important;
         }
@@ -776,7 +748,6 @@
             display: none !important;
         }
 
-        /* 3D Viewport Resizing when Telemetry History is open */
         #digital-twin-viewport {
             transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), margin-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
@@ -789,7 +760,6 @@
             }
         }
 
-        /* Floating Telemetry History Glass Card (Right Side) */
         #telemetry-drawer {
             position: fixed !important;
             right: 18px !important;
@@ -827,8 +797,6 @@
             color: #f8fafc !important;
         }
 
-
-        /* Four-sensor dashboard. Keep the control bar reachable when the drawer opens. */
         #organic-hex-cluster .hex-row-bottom { justify-content: flex-end !important; padding-right: 47px !important; }
         #organic-hex-cluster .hex-row-bottom .hex-tile { flex-shrink: 0; }
         body.has-telemetry-open #organic-hex-cluster .hex-row-bottom { padding-right: 0 !important; }
@@ -836,11 +804,6 @@
         #organic-hex-cluster .hex-val { font-variant-numeric: tabular-nums; }
         #telemetry-visible-stop { display: none !important; }
 
-        /* =========================================================
-           SMART SCADA ANTI-COLLISION & RESPONSIVE HUD
-           Ensures zero-overlap and generous spacing at all zoom levels (100%-200%).
-           Weather Clock docks at top-left. Control Capsule centers at top (or docks cleanly).
-           ========================================================= */
         #digital-twin-viewport #hud-weather-clock {
             position: absolute !important;
             top: 16px !important;
@@ -861,7 +824,7 @@
         #digital-twin-viewport #hud-weather-clock * {
             white-space: nowrap !important;
         }
-        /* Weather Clock Precision Dimensions & Zero Overflow */
+
         #digital-twin-viewport #hud-weather-clock {
             width: 350px !important;
             max-width: 350px !important;
@@ -931,7 +894,6 @@
             font-size: 8.5px !important;
         }
 
-
         #digital-twin-viewport > #floating-action-capsule {
             position: absolute !important;
             top: 16px !important;
@@ -954,7 +916,6 @@
             white-space: nowrap !important;
         }
 
-        /* Standard 5 Hexagons Cluster (Drawer Closed): Bottom-Right */
         #digital-twin-viewport > #organic-hex-cluster {
             position: absolute !important;
             right: 24px !important;
@@ -967,7 +928,6 @@
             gap: 0 !important;
         }
 
-        /* Responsive dodge when viewport width < 1200px or zoomed (Drawer Closed) */
         @media (max-width: 1200px) {
             body.dashboard-active:not(.has-telemetry-open) #digital-twin-viewport > #floating-action-capsule {
                 top: 86px !important;
@@ -991,7 +951,6 @@
             }
         }
 
-        /* On desktop, the analytics panel occupies its own right column */
         @media (min-width: 1100px) {
             body.has-telemetry-open #digital-twin-viewport {
                 width: calc(100% - 470px) !important;
@@ -1011,9 +970,6 @@
             }
         }
 
-
-
-        /* Bio-Telemetry Deck Legends & Table: Prevent multi-line wrapping */
         #telemetry-drawer .chart-legend,
         #telemetry-drawer .telemetry-horizon-legend,
         #telemetry-drawer .hud-legend-group {
@@ -1043,8 +999,6 @@
             text-align: center !important;
         }
 
-
-        /* Avoid any control truncation or overlay on tablet and small desktops. */
         @media (max-width: 1199px) {
             body.has-telemetry-open #view-viewport,
             body.has-telemetry-open #view-viewport:has(#view-dashboard.active) {
@@ -1093,7 +1047,7 @@
                 display: flex !important;
             }
         }
-        /* Leave room for the safety Stop Pump button beside the orbit toolbar. */
+
         body.has-telemetry-open #digital-twin-viewport #g3d-studio-dock {
             left: 160px !important;
             bottom: 18px !important;
@@ -1105,8 +1059,7 @@
             }
         }
         @media (max-width: 700px) {
-            /* On compact screens, gestures still rotate the scene;
-               the secondary orbit toolbar is hidden to protect Stop Pump. */
+
             body.has-telemetry-open #digital-twin-viewport #g3d-studio-dock {
                 display: none !important;
             }
@@ -1166,9 +1119,6 @@
             }
         }
 
-        /* Large, centered PUMP status under the 2 x 2 sensor grid.
-           A single column layout also prevents Telemetry mode from shifting
-           the PUMP tile into a third column. */
         #digital-twin-viewport > #organic-hex-cluster {
             width: 190px !important;
             align-items: center !important;
@@ -1249,7 +1199,6 @@
             }
         }
 
-        /* Center the control capsule when drawer is closed. */
         @media (min-width: 701px) {
             body.dashboard-active:not(.has-telemetry-open) #digital-twin-viewport > #floating-action-capsule {
                 position: absolute !important;
@@ -1266,11 +1215,6 @@
             }
         }
 
-        /* ==============================================================
-           SMART MISTING / HONEYCOMB & RESPONSIVE TELEMETRY (FINAL)
-           Keep five equal-size tiles; let the dock center + compact.
-           This is intentionally the last dashboard CSS rule set.
-           ============================================================== */
         #digital-twin-viewport > #organic-hex-cluster,
         body.has-telemetry-open #digital-twin-viewport > #organic-hex-cluster {
             --sm-hex-size: 82px;
@@ -1304,14 +1248,12 @@
             padding: 0 !important;
             margin: 0 !important;
         }
-       
-/* TOP ROW: SOIL + TANK */
+
 #organic-hex-cluster .hex-row-top,
 body.has-telemetry-open #organic-hex-cluster .hex-row-top {
     margin-bottom: -22px !important;
 }
 
-/* BOTTOM ROW: AIR HUM + TEMP + PUMP */
 #organic-hex-cluster .hex-row-bottom,
 body.has-telemetry-open #organic-hex-cluster .hex-row-bottom {
     margin-bottom: 0 !important;
@@ -1352,8 +1294,7 @@ body.has-telemetry-open #organic-hex-cluster .hex-row-bottom {
         #organic-hex-cluster .hex-row-pump .hex-bar-track {
             width: 52px !important; height: 4px !important; margin-top: 6px !important;
         }
-        /* ── ZERO-COLLISION DYNAMIC HUD ARCHITECTURE ── */
-        /* Normal Mode (Bio-Telemetry Deck Closed): Weather Top-Left, Capsule Centered */
+
         body.dashboard-active:not(.has-telemetry-open) #digital-twin-viewport #hud-weather-clock {
             position: absolute !important;
             top: 14px !important;
@@ -1396,10 +1337,6 @@ body.has-telemetry-open #organic-hex-cluster .hex-row-bottom {
             }
         }
 
-        /* ==============================================================
-           RESPONSIVE HUD TOPBAR: CLOCK & CONTROL CAPSULE (ZERO COLLISION)
-           ============================================================== */
-        /* Deck Open State (Bio-Telemetry Deck Open): Auto-flexible layout without overlap */
         body.has-telemetry-open #digital-twin-viewport #hud-weather-clock {
             position: absolute !important;
             top: 12px !important;
@@ -1426,7 +1363,6 @@ body.has-telemetry-open #organic-hex-cluster .hex-row-bottom {
             font-size: 10px !important;
         }
 
-        /* Sleek, proportionally compact control bar anchored on right vertically aligned with sensor hexes */
         body.has-telemetry-open #digital-twin-viewport > #floating-action-capsule {
             position: absolute !important;
             top: 12px !important;
@@ -1525,7 +1461,6 @@ body.has-telemetry-open #organic-hex-cluster .hex-row-bottom {
             display: none !important;
         }
 
-        /* Preserve emergency stop button */
         body.has-telemetry-open #digital-twin-viewport > #telemetry-visible-stop {
             left: 18px !important; bottom: 16px !important; z-index: 91 !important;
         }
@@ -1559,7 +1494,6 @@ body.has-telemetry-open #organic-hex-cluster .hex-row-bottom {
             body.has-telemetry-open #digital-twin-viewport #g3d-studio-dock { display: none !important; }
         }
 
-/* Hide duplicate STOP PUMP button */
 #telemetry-visible-stop,
 body.has-telemetry-open #telemetry-visible-stop,
 body.has-telemetry-open #digital-twin-viewport > #telemetry-visible-stop {
@@ -1567,11 +1501,6 @@ body.has-telemetry-open #digital-twin-viewport > #telemetry-visible-stop {
     visibility: hidden !important;
 }
 
-/* =========================================================
-   VERTICAL SENSOR LAYOUT WHEN TELEMETRY DRAWER IS OPEN
-   Matches original Image 4 & 5: Elegant, generous vertical column.
-   Zero overlap, zero clipped text, perfectly proportioned.
-   ========================================================= */
 body.has-telemetry-open #digital-twin-viewport > #organic-hex-cluster {
     position: absolute !important;
     right: 18px !important;
@@ -1590,12 +1519,10 @@ body.has-telemetry-open #digital-twin-viewport > #organic-hex-cluster {
     padding: 0 !important;
 }
 
-/* Remove row grouping so all 5 tiles sit in 1 vertical column */
 body.has-telemetry-open #digital-twin-viewport #organic-hex-cluster > .hex-row {
     display: contents !important;
 }
 
-/* All five hexagons have the same authentic diamond size (86px x 98px) */
 body.has-telemetry-open #digital-twin-viewport #organic-hex-cluster .hex-tile {
     position: relative !important;
     width: 86px !important;
@@ -1662,7 +1589,6 @@ body.has-telemetry-open #digital-twin-viewport #organic-hex-cluster .hex-bar-tra
     }
 }
 
-/* ── AUTHENTIC HONEYCOMB FROSTED GLASS SENSORS (IMAGE 3, 4, 5 SPECIFICATION) ── */
 .hex-pod-shape {
     fill: rgba(13, 17, 23, 0.88) !important;
     stroke: rgba(255, 255, 255, 0.18) !important;
@@ -1692,7 +1618,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
     filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.15)) !important;
 }
 
-/* Sensor Active Accents */
 .hex-tile[data-sensor="soil"]:hover .hex-pod-shape,
 .hex-tile[data-sensor="soil"].is-active .hex-pod-shape {
     stroke: #10b981 !important;
@@ -1719,7 +1644,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
     filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.55)) !important;
 }
 
-/* Anti-Wrap Guard for Bio-Telemetry Deck */
 #telemetry-drawer .mono span,
 #telemetry-drawer .chart-legend span,
 #telemetry-drawer .telemetry-table th,
@@ -1727,10 +1651,8 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
     white-space: nowrap !important;
 }
 
+</style>
 
-    </style>
-
-    <!-- Hidden backwards-compatible bridge targets for JS -->
     <div style="display: none;">
         <span class="beacon-dot offline" id="ribbon-beacon"></span>
         <span id="ribbon-status-badge"></span>
@@ -1739,17 +1661,13 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
         <span id="dash-active-plant-text"></span>
     </div>
 
-    <!-- 1. Central 3D Digital Twin Viewport (Full Biological & Weather Twin Stage >= 80% screen area) -->
     <div id="digital-twin-viewport" class="digital-twin-viewport">
-        <!-- 3D Scene Host (No data-garden-ready to allow immediate clean boot) -->
+
         <div id="garden3d" class="garden3d" aria-label="Interactive smart garden 3D model">
             <div class="garden3d-stage" tabindex="0" aria-label="Drag to rotate, scroll to zoom."></div>
-            
-            <!-- Floating Stage Controls (Bottom Left) -->
-            
-        <!-- 1. Precision 3-Tier Time & Weather Card (Top-Left 3D Stage) -->
+
         <div class="hud-weather-clock hud-3tier-weather-card frosted-glass" id="hud-weather-clock" style="position: absolute; top: 14px; left: 16px; z-index: 55; width: 390px; max-width: calc(100vw - 32px); height: auto; display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 10px 12px; border-radius: 14px; box-sizing: border-box; overflow: visible;">
-            <!-- TIER 1: Real-time Digital Clock & Date -->
+
             <div class="hud-tier1-clock" id="hud-tier1-clock" style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid rgba(148, 163, 184, 0.2); white-space: nowrap;">
                 <div class="sw-time-group" title="System Live Time" style="display: inline-flex; align-items: center; gap: 6px;">
                     <span class="beacon-dot online"></span>
@@ -1761,16 +1679,14 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                 </div>
             </div>
 
-            <!-- TIER 2: Live Local Weather & Location Station (Dual Elegant Glass Pills, Zero Squeeze) -->
             <div class="hud-tier2-weather" id="hud-tier2-weather" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; box-sizing: border-box;">
-                <!-- Location Pill Button -->
+
                 <button type="button" class="sw-pill-btn" id="sw-location-toggle" onclick="toggleWeatherLocationPicker(event)" title="Change weather location" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.10); color: var(--text-main); cursor: pointer; box-sizing: border-box; white-space: nowrap; transition: all 0.2s ease;">
                     <span class="sw-location-icon" style="font-size: 11px;">📍</span>
                     <span id="hud-location-name" class="sw-location-name" style="font-size: 11px; font-weight: 600; white-space: nowrap;">Ho Chi Minh City</span>
                     <svg viewBox="0 0 24 24" class="sw-location-caret" style="width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2.2; flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
 
-                <!-- Weather Status Pill Button (Unfolds Tier 3) -->
                 <button type="button" class="sw-pill-btn" onclick="toggleDailyForecast(event)" title="View 24h weather forecast" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.10); color: var(--text-main); cursor: pointer; justify-content: flex-end; box-sizing: border-box; white-space: nowrap; transition: all 0.2s ease;">
                     <span id="hud-weather-icon-wrap" class="sw-weather-icon" style="display: inline-flex; align-items: center;">
                         <svg viewBox="0 0 24 24" id="hud-weather-svg" class="apple-weather-svg" style="width: 13px; height: 13px; stroke: #f59e0b; fill: none; stroke-width: 2.2;"><circle cx="12" cy="12" r="4.5"></circle><line x1="12" y1="2" x2="12" y2="4.5"></line><line x1="12" y1="19.5" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="6.7" y2="6.7"></line><line x1="17.3" y1="17.3" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="4.5" y2="12"></line><line x1="19.5" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="6.7" y2="17.3"></line><line x1="17.3" y1="6.7" x2="19.07" y2="4.93"></line></svg>
@@ -1782,7 +1698,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                 </button>
             </div>
 
-            <!-- Location Search & Quick Pills Popover (Floats directly below location trigger) -->
             <div class="sw-location-popover frosted-glass" id="sw-location-popover" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; z-index: 60;" onclick="event.stopPropagation()">
                 <div class="sw-search-wrap">
                     <input type="text" id="input-weather-search" class="sw-weather-search-input" placeholder="Search city or province..." oninput="onWeatherSearchInput(this.value)">
@@ -1797,7 +1712,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                 </div>
             </div>
 
-            <!-- TIER 3: Hidden Collapsible 24h Forecast Dropdown Tier (Unfolds on demand) -->
             <div class="hud-tier3-forecast" id="hud-forecast-dropdown" style="display: none; border-top: 1px solid rgba(148, 163, 184, 0.2); padding-top: 8px; margin-top: 2px;" onclick="event.stopPropagation()">
                 <div class="hud-forecast-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 10.5px; width: 100%; box-sizing: border-box;">
                     <span class="forecast-title" style="font-weight: 700; color: var(--text-main); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Forecast</span>
@@ -1835,16 +1749,13 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                 <span id="hud-weather-range" style="display: none;">Forecast: 24°–32°C</span>
             </div>
 
-            <!-- Compatibility elements for tests -->
             <button type="button" class="hud-location-selector-btn" id="btn-weather-location" onclick="event.stopPropagation(); toggleWeatherLocationPicker();" style="display: none;"></button>
             <button type="button" class="hud-forecast-toggle-btn" id="btn-toggle-forecast" onclick="toggleDailyForecast()" style="display: none;">Forecast</button>
         </div>
 
-        <!-- Hidden bridge elements for backward JS compatibility -->
         <div id="hud-island-microclimate" style="display: none;"><span id="hud-vpd-val">--</span></div>
         <div id="hud-island-system" style="display: none;"><span id="hud-tank-summary">--</span><span id="hud-spray-stat">Mist: Standby</span></div>
 
-        <!-- Dynamic Optical Callout Beam SVG Overlay (Connects 3D Sensor directly to Hexagon HUD) -->
         <svg id="hud-callout-svg" class="hud-callout-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 52;">
             <defs>
                 <linearGradient id="callout-beam-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1865,13 +1776,12 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
             <circle id="callout-origin-node" cx="-100" cy="-100" r="4.5" fill="#10b981" stroke="#ffffff" stroke-width="1.5" opacity="0" />
         </svg>
 
-        <!-- 3D Studio Single Micro-Bar (Collapsible + Auto-Spin + X-Pan Slider + Center Reset) -->
         <div class="g3d-studio-dock" id="g3d-studio-dock" style="position: absolute; bottom: 18px; left: 88px; z-index: 45; touch-action: none;">
             <div class="garden3d-micro-bar frosted-glass" id="garden3d-micro-bar">
                 <span class="g3d-drag-handle" id="g3d-drag-handle" title="Drag to move 3D Controls">
                     <svg viewBox="0 0 24 24" style="width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.2;"><circle cx="9" cy="6" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="18" r="1.5"></circle><circle cx="15" cy="6" r="1.5"></circle><circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="18" r="1.5"></circle></svg>
                 </span>
-                
+
                 <div class="g3d-dock-controls" id="g3d-dock-controls" style="display: inline-flex; align-items: center; gap: 7px;">
                     <span class="micro-bar-sep">|</span>
                     <button type="button" class="micro-bar-btn" id="btn-360-spin" onclick="if(window.Garden3D) Garden3D.toggleAutoRotate();" title="Toggle 360° Continuous Orbit">
@@ -1887,12 +1797,12 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                 </div>
 
                 <span class="micro-bar-sep">|</span>
-                <!-- Collapse / Expand toggle button -->
+
                 <button type="button" class="micro-bar-toggle-btn" id="btn-toggle-studio-bar" onclick="toggleStudioDock()" title="Collapse / Expand 3D Studio Dock">
                     <span id="studio-toggle-icon">◀</span>
                 </button>
             </div>
-            <!-- Hidden backward-compatibility anchors for tests if needed -->
+
             <div style="display: none;">
                 <button id="btn-cam-home" onclick="if(window.Garden3D) Garden3D.home();"></button>
                 <button id="btn-cam-canopy" onclick="if(window.Garden3D) Garden3D.focusSensor('soil');"></button>
@@ -1902,7 +1812,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
             </div>
         </div>
 
-        
         </div>
 
             <div class="garden3d-stage-controls" style="display: none;">
@@ -1918,9 +1827,7 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                 <span style="opacity: 0.4;">|</span>
                 <span style="font-size: 10.5px; opacity: 0.75;" class="garden3d-status">Drag to orbit 360° · Scroll to zoom</span>
             </div>
-        <!-- The control capsule and sensor cards share the 3D viewport coordinate space. -->
 
-        <!-- 2. Floating Action Capsule (Dock at top edge) -->
         <div id="floating-action-capsule" class="floating-action-capsule frosted-glass">
             <button type="button" class="btn-quick-spray" id="btn-quick-spray" title="Quick Spray (10s)">
                 <div id="quick-spray-ring" class="quick-spray-ring" data-stroke-dashoffset="0">
@@ -1966,7 +1873,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 
             <div class="capsule-divider"></div>
 
-            <!-- Pump Actuation Cluster (START & STOP with Safety Interlocks) -->
             <div class="capsule-actuation-cluster" id="capsule-actuation-cluster" title="Pump controls with firmware temperature, soil and water interlocks">
                 <button type="button" class="capsule-pump-btn capsule-pump-start" id="capsule-btn-start" onclick="handleCapsuleStartPump()" title="Start Mist Pump">
                     <svg viewBox="0 0 24 24" style="width: 10px; height: 10px; fill: currentColor;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -1979,11 +1885,10 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
             </div>
         </div>
 
-        <!-- 3. Four live Arduino sensors: soil, reservoir, DHT11 humidity, DHT11 temperature -->
         <div id="organic-hex-cluster" class="organic-hex-cluster honeycomb-grid">
-            <!-- Top Row: 2 Hexagons (Soil Moisture, Water Reservoir) -->
+
             <div class="hex-row hex-row-top">
-                <!-- Tile 1: Soil Moisture -->
+
                 <div class="hex-tile" data-sensor="soil" title="Soil Moisture Probe (Click to inspect)">
                     <svg class="hex-border-svg" viewBox="0 0 86 98">
                         <path class="hex-pod-shape" d="M 43,3 L 83,26 L 83,72 L 43,95 L 3,72 L 3,26 Z" stroke-linejoin="round" />
@@ -2003,7 +1908,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                     </div>
                 </div>
 
-                <!-- Tile 2: Water Reservoir -->
                 <div class="hex-tile" data-sensor="water" title="Water Reservoir Tank (Click to inspect)">
                     <svg class="hex-border-svg" viewBox="0 0 86 98">
                         <path class="hex-pod-shape" d="M 43,3 L 83,26 L 83,72 L 43,95 L 3,72 L 3,26 Z" stroke-linejoin="round" />
@@ -2025,9 +1929,8 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                 </div>
             </div>
 
-            <!-- Bottom Row: 2 Hexagons (Air Humidity, Ambient Temperature) -->
             <div class="hex-row hex-row-bottom">
-                <!-- Tile 3: Chamber Relative Humidity (DHT11) -->
+
                 <div class="hex-tile" data-sensor="humidity" title="Chamber Air Humidity / DHT11 (Click to inspect)">
                     <svg class="hex-border-svg" viewBox="0 0 86 98">
                         <path class="hex-pod-shape" d="M 43,3 L 83,26 L 83,72 L 43,95 L 3,72 L 3,26 Z" stroke-linejoin="round" />
@@ -2052,7 +1955,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                     </div>
                 </div>
 
-                <!-- Tile 4: Ambient Temperature -->
                 <div class="hex-tile" data-sensor="temperature" title="Ambient Climate / Temperature (Click to inspect)">
                     <svg class="hex-border-svg" viewBox="0 0 86 98">
                         <path class="hex-pod-shape" d="M 43,3 L 83,26 L 83,72 L 43,95 L 3,72 L 3,26 Z" stroke-linejoin="round" />
@@ -2073,9 +1975,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                     </div>
                 </div>
 
-           
-
-            <!-- Fifth status tile: actual mist pump state from Arduino (Matches Original UI: MIST / IDLE) -->
                 <div class="hex-tile" data-sensor="relay" title="Misting Status (Live from Arduino)">
                     <svg class="hex-border-svg" viewBox="0 0 86 98" aria-hidden="true">
                         <path class="hex-pod-shape" d="M 43,3 L 83,26 L 83,72 L 43,95 L 3,72 L 3,26 Z" stroke-linejoin="round" />
@@ -2100,11 +1999,11 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
                 </div>
             </div>
         </div>
-    
+
 <div class="ai-farmer-companion" id="ai-farmer-companion" title="Click to consult Dr. Flora AI Agronomist">
-<!-- Authentic Animated Vietnamese Farmer Mascot (Dual State: Idle Sweeper vs Scooter Rider) -->
+
 <div class="farmer-avatar-btn is-idle" id="farmer-avatar-btn" onclick="toggleAiChatBot()" title="Dr. Flora AI Mascot — Click to chat">
-<!-- State 1: IDLE — Farmer rhythmically sweeping grass with swaying lawn tufts -->
+
 <svg viewBox="0 0 64 64" class="farmer-mascot-svg farmer-idle-svg" id="farmer-idle-svg" style="width: 48px; height: 48px; display: block;">
 <defs>
 <linearGradient id="hatGradIdle" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -2117,10 +2016,9 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 <stop offset="100%" stop-color="#0f172a" />
 </linearGradient>
 </defs>
-<!-- Ground Shadow -->
+
 <ellipse cx="32" cy="59" rx="19" ry="3.5" fill="rgba(0, 0, 0, 0.35)" />
 
-<!-- Swaying Grass Tufts at feet -->
 <g class="farmer-grass-tufts">
 <path class="grass-blade-1" d="M14 59 Q12 52 9 50 Q13 54 16 59 Z" fill="#22c55e" />
 <path class="grass-blade-2" d="M18 59 Q19 50 23 48 Q20 54 20 59 Z" fill="#16a34a" />
@@ -2128,51 +2026,45 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 <path class="grass-blade-4" d="M43 59 Q42 53 39 51 Q42 55 45 59 Z" fill="#15803d" />
 </g>
 
-<!-- Legs -->
 <rect x="25" y="52" width="5" height="7" rx="2" fill="#0f172a" />
 <rect x="34" y="52" width="5" height="7" rx="2" fill="#0f172a" />
 
-<!-- Farmer Body (Áo Bà Ba) -->
 <path d="M22 34 Q32 37 42 34 L43 53 Q32 55 21 53 Z" fill="url(#shirtGradIdle)" />
-<!-- Emerald Sash Belt -->
+
 <rect x="23" y="44" width="18" height="3" rx="1.5" fill="#10b981" />
 
-<!-- Farmer Head & Cute Friendly Face -->
 <circle cx="32" cy="25" r="8.5" fill="#fcd34d" />
-<!-- Smiling Eyes -->
+
 <path d="M28 24 Q30 22 32 24" fill="none" stroke="#451a03" stroke-width="1.5" stroke-linecap="round" />
 <path d="M34 24 Q36 22 38 24" fill="none" stroke="#451a03" stroke-width="1.5" stroke-linecap="round" />
-<!-- Cheerful Smile -->
+
 <path d="M30 28 Q32.5 31 35 28" fill="none" stroke="#b91c1c" stroke-width="1.4" stroke-linecap="round" />
-<!-- Rosy Cheeks -->
+
 <circle cx="27" cy="27" r="1.6" fill="#f87171" opacity="0.65" />
 <circle cx="37" cy="27" r="1.6" fill="#f87171" opacity="0.65" />
 
-<!-- Traditional Conical Hat (Nón Lá) -->
 <polygon points="32,4 10,20 54,20" fill="url(#hatGradIdle)" stroke="#a16207" stroke-width="1" />
 <line x1="10" y1="20" x2="54" y2="20" stroke="#854d0e" stroke-width="1.8" stroke-linecap="round" />
 <line x1="32" y1="4" x2="22" y2="20" stroke="#ca8a04" stroke-width="0.7" opacity="0.5" />
 <line x1="32" y1="4" x2="42" y2="20" stroke="#ca8a04" stroke-width="0.7" opacity="0.5" />
 <line x1="32" y1="4" x2="32" y2="20" stroke="#ca8a04" stroke-width="0.7" opacity="0.5" />
 
-<!-- Sweeping Broom Arm (Chổi quét cỏ rhythmically sweeping back and forth) -->
 <g class="farmer-broom-arm" id="farmer-broom-arm">
-<!-- Hand / Arm -->
+
 <path d="M38 36 Q44 38 47 43" fill="none" stroke="#fcd34d" stroke-width="2.8" stroke-linecap="round" />
-<!-- Bamboo Broom Handle -->
+
 <line x1="48" y1="28" x2="55" y2="57" stroke="#78350f" stroke-width="2" stroke-linecap="round" />
-<!-- Straw Broom Bristles / Chổi quét cỏ -->
+
 <path d="M52 54 L60 57 L57 61 L50 58 Z" fill="#d97706" stroke="#b45309" stroke-width="0.8" />
 <line x1="53" y1="55" x2="58" y2="59" stroke="#92400e" stroke-width="0.6" />
 <line x1="51" y1="57" x2="56" y2="60" stroke="#92400e" stroke-width="0.6" />
-<!-- Drifting Leaf particles -->
+
 <circle class="flying-leaf-1" cx="58" cy="53" r="1.4" fill="#4ade80" />
 <circle class="flying-leaf-2" cx="61" cy="50" r="1.2" fill="#22c55e" />
 </g>
 <circle cx="23" cy="38" r="2" fill="#fcd34d" />
 </svg>
 
-<!-- State 2: RIDING — Farmer riding mini scooter with spinning wheels, headlight beam & exhaust smoke -->
 <svg viewBox="0 0 64 64" class="farmer-mascot-svg farmer-riding-svg" id="farmer-riding-svg" style="width: 48px; height: 48px; display: none;">
 <defs>
 <linearGradient id="scooterBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -2184,32 +2076,28 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 <stop offset="100%" stop-color="rgba(254, 240, 138, 0)" />
 </linearGradient>
 </defs>
-<!-- Ground Shadow -->
+
 <ellipse cx="32" cy="60" rx="22" ry="3" fill="rgba(0, 0, 0, 0.35)" />
 
-<!-- Headlight Beam Cone -->
 <polygon class="scooter-headlight-beam" points="52,43 64,36 64,50" fill="url(#headlightBeam)" />
 
-<!-- Exhaust Smoke Puffs -->
 <g class="scooter-exhaust-smoke">
 <circle class="smoke-puff-1" cx="6" cy="50" r="2.5" fill="rgba(203, 213, 225, 0.7)" />
 <circle class="smoke-puff-2" cx="2" cy="47" r="3.5" fill="rgba(148, 163, 184, 0.45)" />
 </g>
 
-<!-- Mini Scooter Chassis -->
 <g class="scooter-chassis">
-<!-- Rear & Front Mudguards / Body -->
+
 <path d="M10 52 Q14 44 24 48 L36 48 L46 42 L48 45 L42 52 Z" fill="url(#scooterBodyGrad)" stroke="#065f46" stroke-width="1" />
-<!-- Scooter Floorboard -->
+
 <rect x="22" y="50" width="16" height="3" rx="1.5" fill="#334155" />
-<!-- Handlebar Column & Steering -->
+
 <line x1="45" y1="43" x2="42" y2="30" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" />
 <circle cx="42" cy="29" r="2.2" fill="#e2e8f0" />
-<!-- Headlight Lamp -->
+
 <ellipse cx="49" cy="43" rx="3" ry="2.2" fill="#fef08a" stroke="#ca8a04" stroke-width="0.8" />
 </g>
 
-<!-- Rear Wheel Assembly (Fully visible, detailed tire, rim, hub & spinning spokes) -->
 <g class="wheel-mount-rear" transform="translate(14, 53)">
 <circle cx="0" cy="0" r="6.5" fill="#0f172a" stroke="#475569" stroke-width="1.3" />
 <circle cx="0" cy="0" r="4.2" fill="#1e293b" stroke="#64748b" stroke-width="0.8" />
@@ -2222,7 +2110,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 <circle cx="0" cy="0" r="1.8" fill="#cbd5e1" stroke="#334155" stroke-width="0.5" />
 </g>
 
-<!-- Front Wheel Assembly (Fully visible, detailed tire, rim, hub & spinning spokes) -->
 <g class="wheel-mount-front" transform="translate(48, 53)">
 <circle cx="0" cy="0" r="6.5" fill="#0f172a" stroke="#475569" stroke-width="1.3" />
 <circle cx="0" cy="0" r="4.2" fill="#1e293b" stroke="#64748b" stroke-width="0.8" />
@@ -2235,25 +2122,22 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 <circle cx="0" cy="0" r="1.8" fill="#cbd5e1" stroke="#334155" stroke-width="0.5" />
 </g>
 
-<!-- Farmer Riding: Leaning Forward, Hands on Handlebar -->
 <g class="farmer-rider-body">
-<!-- Áo Bà Ba Rider Torso -->
+
 <path d="M22 35 Q30 36 38 34 L36 48 L24 49 Z" fill="#1e293b" />
-<!-- Legs on scooter floor -->
+
 <path d="M28 46 L34 49 L32 52" fill="none" stroke="#0f172a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
-<!-- Arms forward holding handlebars -->
+
 <path d="M32 36 Q38 34 42 30" fill="none" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round" />
 
-<!-- Farmer Head & Face -->
 <circle cx="30" cy="24" r="8" fill="#fcd34d" />
-<!-- Winking Riding Smile -->
+
 <path d="M27 23 Q29 21 31 23" fill="none" stroke="#451a03" stroke-width="1.4" stroke-linecap="round" />
 <circle cx="34" cy="23" r="1.4" fill="#451a03" />
 <path d="M28 27 Q31 29 34 27" fill="none" stroke="#b91c1c" stroke-width="1.4" stroke-linecap="round" />
 <circle cx="26" cy="26" r="1.4" fill="#f87171" opacity="0.65" />
 <circle cx="35" cy="26" r="1.4" fill="#f87171" opacity="0.65" />
 
-<!-- Nón Lá tilted back in the wind -->
 <polygon points="30,5 9,20 50,18" fill="url(#hatGradIdle)" stroke="#a16207" stroke-width="1" />
 <line x1="9" y1="20" x2="50" y2="18" stroke="#854d0e" stroke-width="1.6" stroke-linecap="round" />
 </g>
@@ -2262,11 +2146,8 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 </div>
 </div>
 
-
-
-<!-- 7. Compact High-Tech Bio-Tech Glass Pod Assistant (#ai-chat-card) -->
 <div class="ai-chat-card frosted-glass compact-biotech-pod" id="ai-chat-card" style="display: none;">
-<!-- Subtle Botanical Leaf Vein Watermark in Header -->
+
 <div class="biotech-header-watermark">
 <svg viewBox="0 0 100 100" class="leaf-watermark-svg" style="width: 100%; height: 100%; pointer-events: none;">
 <path d="M50 5 Q75 30 70 70 Q50 95 30 70 Q25 30 50 5 Z" fill="none" stroke="rgba(255, 255, 255, 0.05)" stroke-width="2" />
@@ -2297,7 +2178,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 </div>
 </div>
 
-<!-- Slide-down LLM API Settings Drawer -->
 <div class="ai-llm-settings-panel" id="ai-llm-settings-panel" style="display: none;">
 <div style="font-size: 11px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">&#x2699;&#xFE0F; External LLM Integration</div>
 <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -2313,7 +2193,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 </div>
 </div>
 
-<!-- Quick Action Chips with High-Contrast Tokens -->
 <div class="ai-prompt-chips">
 <button type="button" class="ai-chip" onclick="sendAiQuickPrompt('health')">
 <svg viewBox="0 0 24 24" class="chip-svg" style="width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.2; flex-shrink: 0;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
@@ -2333,7 +2212,6 @@ html.light .hex-tile.hex-active-popout .hex-pod-shape {
 </button>
 </div>
 
-<!-- Chat Message History -->
 <div class="ai-chat-messages" id="ai-chat-messages">
 <div class="ai-msg ai-msg-bot">
 <div class="ai-msg-bubble">
@@ -2343,13 +2221,11 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
 </div>
 </div>
 
-<!-- Typing indicator -->
 <div id="ai-typing-indicator" class="ai-typing-indicator" style="display: none;">
 <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
 <span style="font-size: 10px; margin-left: 6px; color: var(--accent-emerald);">Dr. Flora is analyzing sensor telemetry...</span>
 </div>
 
-<!-- Chat Input Footer -->
 <form class="ai-chat-input-form" id="ai-chat-form" onsubmit="event.preventDefault(); handleAiChatSubmit();">
 <input type="text" class="ai-chat-input" id="ai-chat-input" placeholder="Ask Dr. Flora about plant health, misting schedule..." autocomplete="off">
 <button type="submit" class="ai-chat-send-btn liquid-btn" id="btn-ai-send" title="Send message">
@@ -2357,9 +2233,8 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                 </button>
             </form>
         </div>
-    </div><!-- /digital-twin-viewport: controls + five status cards remain inside stage -->
+    </div>
 
-        <!-- 4. Morphing UI Frosted Glass Detail Card (Expands when any hexagon is clicked) -->
         <div id="morph-detail-card" class="morph-detail-card frosted-glass">
             <div class="morph-card-inner">
                 <div class="detail-card-header">
@@ -2404,7 +2279,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
             </div>
         </div>
 
-        <!-- 5. Slide-Over Frosted Glass History Drawer (Houses #canvasTelemetry & Controls Dock) -->
         <div id="drawer-backdrop" class="drawer-backdrop" onclick="closeTelemetryDrawer()"></div>
         <aside id="telemetry-drawer" class="telemetry-drawer frosted-glass">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-hairline);">
@@ -2417,10 +2291,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                 </button>
             </div>
 
-            <!-- Hidden Sensor KPI Data Anchors (Maintained for Telemetry Model Binding) -->
-            
-
-            <!-- TIER 2: Bio-Telemetry Horizon & Multivariate Spline Chart -->
             <div class="glass-card bio-comfort-chart-card" id="dashboard-chart-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -2465,7 +2335,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                 </div>
             </div>
 
-            <!-- TIER 3: Zero-Scroll 2-Tab Segmented Module ([ 📋 Live Log ] | [ ⚙️ Thresholds & Relay ]) -->
             <div class="telemetry-tier3-tabs" id="telemetry-tier3-tabs" style="margin-top: 24px;">
                 <div class="tier3-tab-nav">
                     <button type="button" class="tier3-tab-btn active" id="btn-tab-live-log" onclick="switchTier3Tab('log')">
@@ -2479,7 +2348,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                     </button>
                 </div>
 
-                <!-- Tab 1: Live Log Pane -->
                 <div class="tier3-tab-pane active" id="pane-tab-live-log">
                     <div class="telemetry-table-wrapper" style="height: 100%; max-height: 180px; overflow-y: auto;">
                         <table class="telemetry-data-table" id="telemetry-records-table">
@@ -2500,14 +2368,13 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                     </div>
                 </div>
 
-                <!-- Tab 2: Calibration & Relay Pane -->
                 <div class="tier3-tab-pane" id="pane-tab-calibration" style="display: none;">
                     <div class="calibration-quick-form" style="padding: 10px 4px; display: flex; flex-direction: column; gap: 8px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Botanical Profile</span>
                             <span class="badge-pill badge-emerald" id="dash-card-mode-badge" style="font-size: 9.5px;">${setting != null && setting.desiredMode == 'MANUAL' ? 'MANUAL' : 'AUTO'}</span>
                         </div>
-                        
+
                         <div style="display: flex; gap: 6px;">
                             <button type="button" class="btn btn-sm ${setting == null || setting.desiredMode == 'AUTO' ? 'btn-emerald' : 'btn-glass'}" id="btn-switch-auto" onclick="quickSwitchMode('AUTO')" style="flex: 1; justify-content: center; font-weight: 700; height: 26px; font-size: 10px;">AUTO</button>
                             <button type="button" class="btn btn-sm ${setting != null && setting.desiredMode == 'MANUAL' ? 'btn-amber' : 'btn-glass'}" id="btn-switch-manual" onclick="requestSwitchMode('MANUAL')" style="flex: 1; justify-content: center; font-weight: 700; height: 26px; font-size: 10px;">MANUAL</button>
@@ -2565,8 +2432,7 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                     </div>
                 </div>
             </div>
-            
-            <!-- Hidden backward-compatible actuation anchors for existing tests -->
+
             <div style="display: none;">
                 <div id="acc-actuation"></div>
                 <div id="acc-botanical"></div>
@@ -2584,7 +2450,7 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                 <button id="btn-toggle-controls-dock" onclick="toggleControlsDock()"></button>
             </div>
         </aside>
-        <!-- Hidden Sensor KPI Data Anchors (Maintained for Telemetry Model Binding, 100% Hidden) -->
+
         <div style="display: none !important;" id="hidden-telemetry-anchors">
 <div class="holo-vitals-cockpit compact-tier1-kpis" id="holo-vitals-cockpit" style="display: none !important;">
                 <div class="holo-vital-pod" id="holo-pod-soil">
@@ -2647,10 +2513,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
 
     </div>
 
-    <!-- Auto-Boot 3D Engine Script -->
-<!-- ===================================================================
-     VIEW 2: PLANT PROFILES (ZONE BOTANICAL CONFIGURATION)
-     ================================================================== -->
 <div class="view-pane ${activeNav == 'plants' ? 'active' : ''}" id="view-plants">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 14px;">
         <div>
@@ -2669,7 +2531,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         </div>
     </div>
 
-    <!-- Botanical Profile Catalog Table -->
     <div class="glass-card" style="overflow-x: auto;">
         <table class="data-table" id="table-plants">
             <thead>
@@ -2687,10 +2548,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
     </div>
 </div>
 
-
-<!-- ===================================================================
-     VIEW 4: MISTING AUTOMATION SETTINGS
-     ================================================================== -->
 <div class="view-pane ${activeNav == 'settings' ? 'active' : ''}" id="view-settings">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 12px;">
         <div>
@@ -2705,7 +2562,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         </button>
     </div>
 
-    <!-- Overview Status Cards (Summary Bar) -->
     <div class="settings-summary-bar">
         <div class="settings-summary-card">
             <div class="settings-summary-label">Current Mode</div>
@@ -2728,10 +2584,8 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         </div>
     </div>
 
-    <!-- Main Configuration Container -->
     <div class="glass-card" style="padding: 26px;">
-        
-        <!-- Section 1: Mode Selection -->
+
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-hairline);">
             <div class="jewel-icon-box jewel-emerald">
                 <svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
@@ -2740,7 +2594,7 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         </div>
 
         <div class="mode-cards-grid">
-            <!-- Mode Card 1: AUTO -->
+
             <div class="mode-card ${setting == null || setting.desiredMode == 'AUTO' ? 'selected' : ''}" id="card-mode-auto" onclick="selectSettingMode('AUTO')">
                 <input type="radio" name="setting_mode_radio" ${setting == null || setting.desiredMode == 'AUTO' ? 'checked' : ''} style="position: absolute; top: 18px; right: 18px; accent-color: var(--accent-emerald);">
                 <div class="mode-card-title">
@@ -2754,7 +2608,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                 </div>
             </div>
 
-            <!-- Mode Card 2: MANUAL -->
             <div class="mode-card ${setting != null && setting.desiredMode == 'MANUAL' ? 'selected-manual' : ''}" id="card-mode-manual" onclick="selectSettingMode('MANUAL')">
                 <input type="radio" name="setting_mode_radio" ${setting != null && setting.desiredMode == 'MANUAL' ? 'checked' : ''} style="position: absolute; top: 18px; right: 18px; accent-color: var(--accent-amber);">
                 <div class="mode-card-title">
@@ -2769,7 +2622,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
             </div>
         </div>
 
-        <!-- Panel A: AUTO Mode Specific Controls -->
         <div id="panel-settings-auto" style="display: ${setting == null || setting.desiredMode == 'AUTO' ? 'block' : 'none'}; margin-bottom: 24px;">
             <div class="plant-link-banner">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -2825,7 +2677,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
             </div>
         </div>
 
-        <!-- Panel B: MANUAL Mode Specific Guidance -->
         <div id="panel-settings-manual" class="manual-info-banner" style="display: ${setting != null && setting.desiredMode == 'MANUAL' ? 'flex' : 'none'}; margin-bottom: 24px;">
             <div class="jewel-icon-box jewel-amber" style="width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -2833,13 +2684,12 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
             <div>
                 <strong style="color: var(--accent-amber);">Manual Irrigation Mode Active:</strong>
                 <p style="margin: 4px 0 0; color: var(--text-secondary); font-size: 13px;">
-                    Air humidity thresholds are <strong>bypassed</strong>. Soil, temperature and water safety locks remain active. The pump will never activate autonomously. 
+                    Air humidity thresholds are <strong>bypassed</strong>. Soil, temperature and water safety locks remain active. The pump will never activate autonomously.
                     Operators turn the pump ON or OFF manually on the <strong>IoT Dashboard</strong>. Safety duration cutoff below remains active.
                 </p>
             </div>
         </div>
 
-        <!-- Section 2: Hardware Safety Timers -->
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-hairline);">
             <div class="jewel-icon-box jewel-amber">
                 <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -2860,7 +2710,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
             </div>
         </div>
 
-        <!-- Bottom Save Action -->
         <div style="display: flex; justify-content: flex-end; padding-top: 18px; border-top: 1px solid var(--border-hairline);">
             <button class="btn btn-emerald" onclick="saveMistingSettings()">
                 <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
@@ -2871,16 +2720,11 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
     </div>
 </div>
 
-
-
-<!-- ===================================================================
-     VIEW 3: HISTORY & AUDIT LOGS (SYSTEM OPERATIONS & TELEMETRY RECORDS)
-     ================================================================== -->
 <div class="view-pane ${activeNav == 'history' ? 'active' : ''}" id="view-history">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
         <div>
             <h2 style="font-family: var(--font-heading); font-size: 19px; font-weight: 700; color: var(--text-main);">System Operations &amp; Audit Logs</h2>
-            
+
         </div>
 
         <div style="display: flex; gap: 10px;">
@@ -2895,7 +2739,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         </div>
     </div>
 
-    <!-- Time Filtering Header -->
     <div style="display: flex; gap: 12px; align-items: center; padding: 14px; background: var(--bg-card); border: 1px solid var(--border-hairline); border-radius: var(--radius-md); margin-bottom: 18px; flex-wrap: wrap;">
         <div style="display: flex; gap: 8px; align-items: center;">
             <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Time Range:</span>
@@ -2914,7 +2757,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         </div>
     </div>
 
-    <!-- 3 Dedicated Classification Tabs (Segmented Control Bar) -->
     <div class="history-tab-group">
         <button class="history-tab-btn active" id="tab-btn-pump" onclick="switchHistoryTab('pump')">
             <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -2933,9 +2775,8 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         </button>
     </div>
 
-    <!-- Table Container -->
     <div class="glass-card" style="overflow-x: auto;">
-        <!-- Tab 1: Pump Controls -->
+
         <table class="data-table" id="table-tab-pump">
             <thead>
                 <tr>
@@ -2951,7 +2792,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
             <tbody class="mono" id="tbody-pump-logs"></tbody>
         </table>
 
-        <!-- Tab 2: Sensor Telemetry -->
         <table class="data-table" id="table-tab-sensor" style="display: none;">
             <thead>
                 <tr>
@@ -2965,7 +2805,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
             <tbody class="mono" id="tbody-sensor-logs"></tbody>
         </table>
 
-        <!-- Tab 3: Security Audit Logs -->
         <table class="data-table" id="table-tab-audit" style="display: none;">
             <thead>
                 <tr>
@@ -2982,13 +2821,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
     </div>
 </div>
 
-
-
-
-
-<!-- ===================================================================
-     VIEW 6: USER MANAGEMENT (FULL RBAC CRUD)
-     ================================================================== -->
 <div class="view-pane ${activeNav == 'users' ? 'active' : ''}" id="view-users">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 14px;">
         <div>
@@ -3007,7 +2839,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         </div>
     </div>
 
-    <!-- User Accounts Table -->
     <div class="glass-card" style="overflow-x: auto;">
         <table class="data-table" id="table-users">
             <thead>
@@ -3026,12 +2857,8 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
     </div>
 </div>
 
-
-<!-- ===================================================================
-     VIEW 7: USER PROFILE (BALANCED 2-COLUMN SCADA/APPLE UI)
-     ================================================================== -->
 <div class="view-pane ${activeNav == 'profile' ? 'active' : ''}" id="view-profile">
-    
+
     <c:if test="${not empty successMessage}">
         <div class="alert alert-emerald" style="margin-bottom: 18px; padding: 12px 18px; border-radius: var(--radius-md); background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #10B981; font-weight: 600; display: flex; align-items: center; gap: 10px;">
             <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -3045,10 +2872,8 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         </div>
     </c:if>
 
-    <!-- 2-Column Balanced Profile Grid -->
     <div class="profile-executive-grid">
-        
-        <!-- Left Column: User Identity Card (Clean, Minimal, No Duplication) -->
+
         <div class="glass-card profile-id-card">
             <div class="profile-avatar-wrap">
                 <div class="apple-avatar" id="profile-card-avatar">
@@ -3067,7 +2892,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                 </div>
             </div>
 
-            <!-- Identity Attribute Rows -->
             <div class="profile-details-list">
                 <div class="profile-detail-row">
                     <span class="profile-detail-label" style="display: flex; align-items: center; gap: 6px;">
@@ -3094,22 +2918,19 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                 </div>
             </div>
 
-            <!-- Single Edit Action Button (Navigates to User Management) -->
             <div style="margin-top: 24px;">
                 <button type="button" class="btn btn-emerald" onclick="navigateTo('view-users')" style="width: 100%; justify-content: center; height: 38px; font-size: 12.5px; font-weight: 700;">
                     <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; margin-right: 6px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     Manage Users &amp; Permissions
                 </button>
             </div>
-            
-            <!-- Hidden input bridges for backward JS compatibility -->
+
             <input type="hidden" id="profile-card-fullname-val" value="${sessionScope.user != null ? fn:escapeXml(sessionScope.user.fullName) : 'Admin'}">
             <input type="hidden" id="profile-card-fullname-input" value="${sessionScope.user != null ? fn:escapeXml(sessionScope.user.fullName) : 'Admin'}">
             <input type="hidden" id="profile-card-email-input" value="${sessionScope.user != null ? fn:escapeXml(sessionScope.user.email) : 'admin@example.com'}">
             <span id="profile-card-email-display" style="display:none">${sessionScope.user != null ? fn:escapeXml(sessionScope.user.email) : 'admin@example.com'}</span>
         </div>
 
-        <!-- Right Column: Current Role Authoritative Privileges (Filtered strictly to active user's role) -->
         <div class="glass-card" style="padding: 24px 28px; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border-hairline);">
@@ -3254,12 +3075,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
 
 </div>
 
-<!-- Bridge Real Server Entities to AppState -->
-
-
-<!-- =========================================================================
-     WEATHER LOCATION & PROVINCE SEARCH MODAL (OPEN-METEO)
-     ========================================================================= -->
 <div id="modal-weather-location" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); z-index: 1000; align-items: center; justify-content: center;">
     <div class="frosted-glass" style="width: min(520px, 92vw); border-radius: 20px; padding: 24px; background: rgba(255, 255, 255, 0.96); border: 1px solid rgba(255, 255, 255, 0.7); box-shadow: 0 24px 60px rgba(0,0,0,0.25); color: #0f172a;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
@@ -3274,16 +3089,14 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
             Select your agricultural zone to synchronize real-time climate, rain probability, and temperature via Open-Meteo.
         </p>
 
-        <!-- Search Input -->
         <div style="position: relative; margin-bottom: 14px;">
             <input type="text" id="weather-location-search-input" placeholder="Search city or province (e.g. Ho Chi Minh City, Da Lat, Ha Noi, Can Tho...)" style="width: 100%; padding: 10px 14px 10px 36px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.15); background: #ffffff; font-size: 13px; color: #0f172a; box-sizing: border-box;" oninput="filterWeatherProvinces(this.value)">
             <svg viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 12px; width: 14px; height: 14px; stroke: #94a3b8; fill: none; stroke-width: 2.2;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         </div>
 
-        <!-- Province Chips -->
         <div style="font-size: 11.5px; font-weight: 700; color: #475569; margin-bottom: 8px;">Popular Growing Regions:</div>
         <div id="weather-province-chips-container" style="display: flex; flex-wrap: wrap; gap: 6px; max-height: 210px; overflow-y: auto; padding: 2px;">
-            <!-- Rendered by JS -->
+
         </div>
 
         <div style="margin-top: 18px; display: flex; justify-content: flex-end;">
@@ -3293,9 +3106,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
 </div>
 
 <script>
-// =========================================================================
-// REAL-TIME WEATHER ENGINE & SEARCHABLE PROVINCE LOCATIONS (OPEN-METEO)
-// =========================================================================
 (function() {
     const VIETNAM_PROVINCES = [
         { name: 'Ho Chi Minh City', lat: 10.8231, lon: 106.6297 },
@@ -3412,7 +3222,6 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
                     iconWrap.innerHTML = '<svg viewBox="0 0 24 24" class="apple-weather-svg" style="stroke: ' + iconColor + '; fill: none; stroke-width: 2;">' + iconSvg + '</svg>';
                 }
 
-                // Update Hourly Milestones: 08:00, 12:00, 16:00, 20:00
                 if (data.hourly && data.hourly.temperature_2m) {
                     const times = [8, 12, 16, 20];
                     times.forEach(hr => {
@@ -3533,14 +3342,10 @@ Hello! I am Dr. Flora, your digital AI agronomist. I monitor your Ludisia discol
         renderWeatherProvinces(filtered);
     };
 
-    // Initial weather fetch on startup
     setTimeout(() => fetchWeatherForCity(currentCity), 300);
     setInterval(() => fetchWeatherForCity(currentCity), 20 * 60 * 1000);
 })();
 
-// =========================================================================
-// DRAWER & 3D VIEWPORT SPLIT HANDLERS (F11 / R3)
-// =========================================================================
 window.openTelemetryDrawer = function() {
     const drawer = document.getElementById('telemetry-drawer');
     const viewport = document.getElementById('digital-twin-viewport');
@@ -3581,9 +3386,7 @@ window.closeTelemetryDrawer = function() {
 };
 </script>
 
-<!-- =========================================================================
-     BRIDGE REAL SERVER ENTITIES TO APPSTATE & FOOTER
-     ========================================================================= -->
-<script>window.INITIAL_SERVER_DATA = ${empty bootstrapJson ? "{}" : bootstrapJson};</script>
+<script>window.INITIAL_SERVER_DATA = ${empty bootstrapJson ? "{}" : bootstrapJson};
+</script>
 
 <jsp:include page="/WEB-INF/views/layout/footer.jsp" />

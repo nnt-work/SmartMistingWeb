@@ -31,7 +31,8 @@
             line-height: 1;
             margin-bottom: 12px;
         }
-    </style>
+
+</style>
 </head>
 <body>
 <div class="error-container">
