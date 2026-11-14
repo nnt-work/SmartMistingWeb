@@ -16,6 +16,11 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
+    <!-- Lifecycle Listener for Discord Alert & Healthchecks Watchdog -->
+    <listener>
+        <listener-class>listener.AppLifecycle</listener-class>
+    </listener>
+
     <!-- Welcome File -->
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
@@ -26,18 +31,32 @@
         <session-timeout>30</session-timeout>
     </session-config>
 
+    <!-- MIME Mappings with UTF-8 Charset Enforcement -->
+    <mime-mapping>
+        <extension>js</extension>
+        <mime-type>application/javascript;charset=UTF-8</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>json</extension>
+        <mime-type>application/json;charset=UTF-8</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>css</extension>
+        <mime-type>text/css;charset=UTF-8</mime-type>
+    </mime-mapping>
+
     <!-- Error Page Handlers -->
     <error-page>
         <error-code>403</error-code>
-        <location>/views/error/403.jsp</location>
+        <location>/WEB-INF/views/error/403.jsp</location>
     </error-page>
     <error-page>
         <error-code>404</error-code>
-        <location>/views/error/404.jsp</location>
+        <location>/WEB-INF/views/error/404.jsp</location>
     </error-page>
     <error-page>
         <error-code>500</error-code>
-        <location>/views/error/500.jsp</location>
+        <location>/WEB-INF/views/error/500.jsp</location>
     </error-page>
 
 </web-app>

@@ -3,3 +3,6 @@
 /nbproject/private/
 *.zip
 temp_*
+*.log
+*.class
+

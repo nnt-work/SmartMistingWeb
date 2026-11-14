@@ -63,12 +63,14 @@ public class PlantServlet extends HttpServlet {
                 }
             }
 
-            request.getRequestDispatcher("/views/plants/plant-list.jsp").forward(request, response);
+            request.setAttribute("activeNav", "plants");
+            request.getRequestDispatcher("/dashboard").forward(request, response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("errorMessage", "Lỗi nạp danh sách cây: " + e.getMessage());
-            request.getRequestDispatcher("/views/plants/plant-list.jsp").forward(request, response);
+            request.setAttribute("errorMessage", "Error loading plant profiles: " + e.getMessage());
+            request.setAttribute("activeNav", "plants");
+            request.getRequestDispatcher("/dashboard").forward(request, response);
         }
     }
 
@@ -86,21 +88,28 @@ public class PlantServlet extends HttpServlet {
 
         // RBAC validation: Only ADMIN and STAFF can add/edit/delete
         if (user.isViewer()) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Tài khoản VIEWER không có quyền thao tác dữ liệu cây trồng!");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "VIEWER role is not authorized to modify plant data!");
             return;
         }
 
         String action = request.getParameter("action");
 
         try {
+            if("add".equalsIgnoreCase(action)||"edit".equalsIgnoreCase(action)) {
+                double on=Double.parseDouble(request.getParameter("humidity_on")),off=Double.parseDouble(request.getParameter("humidity_off"));
+                if(!Double.isFinite(on)||!Double.isFinite(off)||on<1||on>=off||off>100)throw new IllegalArgumentException("RH bounds must satisfy 1 <= on < off <= 100");
+                if(request.getParameter("plant_name")==null||request.getParameter("plant_name").trim().length()>100)throw new IllegalArgumentException("Plant name maximum 100 characters");
+            }
             if ("add".equalsIgnoreCase(action)) {
                 String plantName = request.getParameter("plant_name");
                 String species = request.getParameter("species");
                 String dateStr = request.getParameter("planted_date");
                 String note = request.getParameter("note");
+                String humOnStr = request.getParameter("humidity_on");
+                String humOffStr = request.getParameter("humidity_off");
 
                 if (plantName == null || plantName.trim().isEmpty()) {
-                    session.setAttribute("flashError", "Tên cây trồng không được để trống!");
+                    session.setAttribute("flashError", "Plant name cannot be empty!");
                     response.sendRedirect(request.getContextPath() + "/plants");
                     return;
                 }
@@ -115,13 +124,17 @@ public class PlantServlet extends HttpServlet {
                     }
                 }
                 p.setNote(note != null ? note.trim() : "");
+                try {
+                    if (humOnStr != null && !humOnStr.trim().isEmpty()) p.setHumidityOn(Double.parseDouble(humOnStr));
+                    if (humOffStr != null && !humOffStr.trim().isEmpty()) p.setHumidityOff(Double.parseDouble(humOffStr));
+                } catch (NumberFormatException ignored) {}
                 p.setCreatedBy(user.getUserId());
 
                 plantDAO.addPlant(p);
                 logDAO.log("ADMIN", null, user.getUserId(), null, "PLANT_ADD",
-                        "[" + user.getFullName() + "] đã thêm hồ sơ cây mới: " + p.getPlantName());
+                        "[" + user.getFullName() + "] added new plant: " + p.getPlantName());
 
-                session.setAttribute("flashSuccess", "Thêm cây trồng thành công: " + p.getPlantName());
+                session.setAttribute("flashSuccess", "Plant profile added successfully: " + p.getPlantName());
 
             } else if ("edit".equalsIgnoreCase(action)) {
                 int plantId = Integer.parseInt(request.getParameter("plant_id"));
@@ -129,9 +142,11 @@ public class PlantServlet extends HttpServlet {
                 String species = request.getParameter("species");
                 String dateStr = request.getParameter("planted_date");
                 String note = request.getParameter("note");
+                String humOnStr = request.getParameter("humidity_on");
+                String humOffStr = request.getParameter("humidity_off");
 
                 if (plantName == null || plantName.trim().isEmpty()) {
-                    session.setAttribute("flashError", "Tên cây trồng không được để trống!");
+                    session.setAttribute("flashError", "Plant name cannot be empty!");
                     response.sendRedirect(request.getContextPath() + "/plants");
                     return;
                 }
@@ -147,14 +162,18 @@ public class PlantServlet extends HttpServlet {
                         }
                     }
                     p.setNote(note != null ? note.trim() : "");
+                    try {
+                        if (humOnStr != null && !humOnStr.trim().isEmpty()) p.setHumidityOn(Double.parseDouble(humOnStr));
+                        if (humOffStr != null && !humOffStr.trim().isEmpty()) p.setHumidityOff(Double.parseDouble(humOffStr));
+                    } catch (NumberFormatException ignored) {}
                     plantDAO.updatePlant(p);
 
                     logDAO.log("ADMIN", null, user.getUserId(), null, "PLANT_UPDATE",
-                            "[" + user.getFullName() + "] đã cập nhật cây: " + p.getPlantName());
+                            "[" + user.getFullName() + "] updated plant: " + p.getPlantName());
 
-                    session.setAttribute("flashSuccess", "Cập nhật thông tin cây thành công!");
+                    session.setAttribute("flashSuccess", "Plant profile updated successfully!");
                 } else {
-                    session.setAttribute("flashError", "Không tìm thấy cây cần cập nhật!");
+                    session.setAttribute("flashError", "Plant profile not found!");
                 }
 
             } else if ("delete".equalsIgnoreCase(action)) {
@@ -163,10 +182,10 @@ public class PlantServlet extends HttpServlet {
                 if (p != null) {
                     plantDAO.deletePlant(plantId);
                     logDAO.log("ADMIN", null, user.getUserId(), null, "PLANT_DELETE",
-                            "[" + user.getFullName() + "] đã xóa cây: " + p.getPlantName());
-                    session.setAttribute("flashSuccess", "Đã xóa cây [" + p.getPlantName() + "] thành công.");
+                            "[" + user.getFullName() + "] deleted plant: " + p.getPlantName());
+                    session.setAttribute("flashSuccess", "Plant [" + p.getPlantName() + "] deleted successfully.");
                 } else {
-                    session.setAttribute("flashError", "Không tìm thấy cây để xóa!");
+                    session.setAttribute("flashError", "Plant profile to delete not found!");
                 }
             }
 
@@ -174,7 +193,7 @@ public class PlantServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            session.setAttribute("flashError", "Lỗi xử lý cây trồng: " + e.getMessage());
+            session.setAttribute("flashError", "Plant operation error: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/plants");
         }
     }

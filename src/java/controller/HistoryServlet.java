@@ -38,28 +38,90 @@ public class HistoryServlet extends HttpServlet {
         }
 
         String keyword = request.getParameter("search");
+        String fromDate = request.getParameter("fromDate");
+        String toDate = request.getParameter("toDate");
 
         try {
             List<ActivityLog> mistingLogs = logDAO.getLogs("MISTING", keyword, 50);
-            List<SensorReading> sensorReadings = sensorDAO.getRecentReadings(1, 50);
-            List<ActivityLog> adminLogs = null;
+            
+            List<SensorReading> sensorReadings;
+            if ((fromDate != null && !fromDate.trim().isEmpty()) || (toDate != null && !toDate.trim().isEmpty())) {
+                sensorReadings = sensorDAO.getReadingsByDateRange(1, fromDate, toDate, 100);
+            } else {
+                sensorReadings = sensorDAO.getRecentReadings(1, 50);
+            }
 
+            List<ActivityLog> adminLogs = null;
             if (user != null && user.isAdmin()) {
                 adminLogs = logDAO.getLogs("ADMIN", keyword, 50);
             }
 
             request.setAttribute("activeTab", tab);
             request.setAttribute("searchKeyword", keyword);
+            request.setAttribute("fromDate", fromDate);
+            request.setAttribute("toDate", toDate);
             request.setAttribute("mistingLogs", mistingLogs);
             request.setAttribute("sensorReadings", sensorReadings);
             request.setAttribute("adminLogs", adminLogs);
 
-            request.getRequestDispatcher("/views/history/history.jsp").forward(request, response);
+            if (session != null && session.getAttribute("flashSuccess") != null) {
+                request.setAttribute("successMessage", session.getAttribute("flashSuccess"));
+                session.removeAttribute("flashSuccess");
+            }
+
+            request.setAttribute("activeNav", "history");
+            request.getRequestDispatcher("/dashboard").forward(request, response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("errorMessage", "Lỗi nạp nhật ký: " + e.getMessage());
-            request.getRequestDispatcher("/views/history/history.jsp").forward(request, response);
+            request.setAttribute("errorMessage", "Error loading activity logs: " + e.getMessage());
+            request.setAttribute("activeNav", "history");
+            request.getRequestDispatcher("/dashboard").forward(request, response);
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        AppUser user = (session != null) ? (AppUser) session.getAttribute("user") : null;
+
+        if (user == null || !user.isAdmin()) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only administrators can clear history logs.");
+            return;
+        }
+
+        String action = request.getParameter("action");
+        String scope = request.getParameter("scope");
+        if (scope == null || scope.trim().isEmpty()) {
+            scope = "all";
+        }
+
+        try {
+            if ("clear".equalsIgnoreCase(action)) {
+                int count = 0;
+                if ("misting".equalsIgnoreCase(scope)) {
+                    count = logDAO.clearLogs("MISTING");
+                } else if ("admin".equalsIgnoreCase(scope)) {
+                    count = logDAO.clearLogs("ADMIN");
+                } else if ("sensor".equalsIgnoreCase(scope)) {
+                    count = sensorDAO.clearAllReadings();
+                } else {
+                    count = logDAO.clearLogs("ALL") + sensorDAO.clearAllReadings();
+                }
+
+                logDAO.log("ADMIN", null, user.getUserId(), null, "CLEAR_HISTORY",
+                        "[" + user.getUsername() + "] cleared " + scope.toUpperCase() + " history logs (" + count + " records removed).");
+
+                session.setAttribute("flashSuccess", "History logs (" + scope.toUpperCase() + ") purged successfully.");
+            }
+
+            response.sendRedirect(request.getContextPath() + "/history");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            session.setAttribute("flashError", "Failed to clear history: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/history");
         }
     }
 }

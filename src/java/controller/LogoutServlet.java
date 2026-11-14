@@ -24,7 +24,7 @@ public class LogoutServlet extends HttpServlet {
             AppUser user = (AppUser) session.getAttribute("user");
             if (user != null) {
                 logDAO.log("ADMIN", null, user.getUserId(), null, "LOGOUT",
-                        "Người dùng [" + user.getUsername() + "] đã đăng xuất.");
+                        "User [" + user.getUsername() + "] logged out.");
             }
             session.invalidate();
         }

@@ -65,6 +65,21 @@ public class MistingSettingDAO {
         }
     }
 
+    public boolean updateMaxRunSec(int deviceId, int maxRunSec) throws SQLException, ClassNotFoundException {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = DBContext.getConnection();
+            String sql = "UPDATE MistingSetting SET max_run_sec = ?, version = version + 1, updated_at = SYSDATETIME() WHERE device_id = ?";
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, maxRunSec);
+            ps.setInt(2, deviceId);
+            return ps.executeUpdate() > 0;
+        } finally {
+            DBContext.close(conn, ps, null);
+        }
+    }
+
     private MistingSetting mapResultSetToSetting(ResultSet rs) throws SQLException {
         MistingSetting s = new MistingSetting();
         s.setDeviceId(rs.getInt("device_id"));

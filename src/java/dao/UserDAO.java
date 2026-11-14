@@ -20,7 +20,7 @@ public class UserDAO {
         ResultSet rs = null;
         try {
             conn = DBContext.getConnection();
-            String sql = "SELECT user_id, username, password_hash, full_name, email, role_code, is_locked, is_deleted, created_at, updated_at "
+            String sql = "SELECT user_id, username, password_hash, full_name, email, role_code, is_locked, is_deleted, status_text, created_at, updated_at "
                        + "FROM AppUser WHERE username = ? AND is_deleted = 0";
             ps = conn.prepareStatement(sql);
             ps.setString(1, username);
@@ -29,6 +29,7 @@ public class UserDAO {
                 String storedHash = rs.getString("password_hash");
                 if (PasswordUtil.verify(rawPassword, storedHash)) {
                     AppUser user = mapResultSetToUser(rs);
+                    if(!storedHash.startsWith("pbkdf2$")) updatePassword(user.getUserId(),rawPassword);
                     return user;
                 }
             }
@@ -44,7 +45,7 @@ public class UserDAO {
         ResultSet rs = null;
         try {
             conn = DBContext.getConnection();
-            String sql = "SELECT user_id, username, password_hash, full_name, email, role_code, is_locked, is_deleted, created_at, updated_at "
+            String sql = "SELECT user_id, username, password_hash, full_name, email, role_code, is_locked, is_deleted, status_text, created_at, updated_at "
                        + "FROM AppUser WHERE user_id = ? AND is_deleted = 0";
             ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);
@@ -64,7 +65,7 @@ public class UserDAO {
         ResultSet rs = null;
         try {
             conn = DBContext.getConnection();
-            String sql = "SELECT user_id, username, password_hash, full_name, email, role_code, is_locked, is_deleted, created_at, updated_at "
+            String sql = "SELECT user_id, username, password_hash, full_name, email, role_code, is_locked, is_deleted, status_text, created_at, updated_at "
                        + "FROM AppUser WHERE username = ? AND is_deleted = 0";
             ps = conn.prepareStatement(sql);
             ps.setString(1, username);
@@ -85,7 +86,7 @@ public class UserDAO {
         ResultSet rs = null;
         try {
             conn = DBContext.getConnection();
-            StringBuilder sql = new StringBuilder("SELECT user_id, username, password_hash, full_name, email, role_code, is_locked, is_deleted, created_at, updated_at "
+            StringBuilder sql = new StringBuilder("SELECT user_id, username, password_hash, full_name, email, role_code, is_locked, is_deleted, status_text, created_at, updated_at "
                                                 + "FROM AppUser WHERE is_deleted = 0 ");
             if (keyword != null && !keyword.trim().isEmpty()) {
                 sql.append("AND (username LIKE ? OR full_name LIKE ? OR email LIKE ?) ");
@@ -233,6 +234,24 @@ public class UserDAO {
         return 0;
     }
 
+    public int countUsers() throws SQLException, ClassNotFoundException {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            conn = DBContext.getConnection();
+            String sql = "SELECT COUNT(*) FROM AppUser WHERE is_deleted = 0";
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } finally {
+            DBContext.close(conn, ps, rs);
+        }
+        return 0;
+    }
+
     private AppUser mapResultSetToUser(ResultSet rs) throws SQLException {
         AppUser u = new AppUser();
         u.setUserId(rs.getInt("user_id"));
@@ -243,20 +262,58 @@ public class UserDAO {
         u.setRoleCode(rs.getString("role_code"));
         u.setIsLocked(rs.getBoolean("is_locked"));
         u.setIsDeleted(rs.getBoolean("is_deleted"));
+        try {
+            String st = rs.getString("status_text");
+            if (st != null && !st.trim().isEmpty()) {
+                u.setStatusText(st);
+            }
+        } catch (Exception ignored) {
+        }
         u.setCreatedAt(rs.getTimestamp("created_at"));
         u.setUpdatedAt(rs.getTimestamp("updated_at"));
         return u;
     }
 
-    public void toggleLock(int userId, boolean equals) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public boolean updateStatus(int userId, String statusText) throws SQLException, ClassNotFoundException {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = DBContext.getConnection();
+            String sql = "UPDATE AppUser SET status_text = ?, updated_at = SYSDATETIME() WHERE user_id = ?";
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, statusText != null ? statusText.trim() : "Active");
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } finally {
+            DBContext.close(conn, ps, null);
+        }
+    }
+
+    public void toggleLock(int userId, boolean lockState) {
+        try {
+            setLockStatus(userId, lockState);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public List<AppUser> getAllUsers() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        try {
+            return getAllUsers(null, null);
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 
     public void updateRole(int userId, String newRole) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        try {
+            AppUser u = getUserById(userId);
+            if (u != null) {
+                u.setRoleCode(newRole);
+                updateUser(u);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

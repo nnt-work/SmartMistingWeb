@@ -96,4 +96,43 @@ public class ActivityLogDAO {
         }
         return list;
     }
+
+    public int clearLogs(String logType) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = DBContext.getConnection();
+            String sql;
+            if (logType == null || "ALL".equalsIgnoreCase(logType)) {
+                sql = "DELETE FROM ActivityLog";
+                ps = conn.prepareStatement(sql);
+            } else {
+                sql = "DELETE FROM ActivityLog WHERE log_type = ?";
+                ps = conn.prepareStatement(sql);
+                ps.setString(1, logType.toUpperCase());
+            }
+            return ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        } finally {
+            DBContext.close(conn, ps, null);
+        }
+    }
+
+    public int deleteSampleLogs() {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = DBContext.getConnection();
+            String sql = "DELETE FROM ActivityLog WHERE is_sample = 1";
+            ps = conn.prepareStatement(sql);
+            return ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        } finally {
+            DBContext.close(conn, ps, null);
+        }
+    }
 }

@@ -9,6 +9,29 @@
 <!-- in the project's Project Properties dialog box.-->
 <project name="PRJ_Sm" default="default" basedir=".">
     <description>Builds, tests, and runs the project PRJ_Sm.</description>
+    <target name="-pre-init">
+        <property name="libs.CopyLibs.classpath" value="nbproject/copylibstask.jar"/>
+
+        <!-- Priority 1: Parent folder relative Tomcat -->
+        <condition property="j2ee.server.home" value="${basedir}/../apache-tomcat-9.0.113">
+            <available file="${basedir}/../apache-tomcat-9.0.113/lib/servlet-api.jar"/>
+        </condition>
+
+        <!-- Priority 2: Standard user Tomcat path -->
+        <condition property="j2ee.server.home" value="C:/Users/Nguyen Nhat Tam/Downloads/PROFES/Ky4_FPT/PRJ301/apache-tomcat-9.0.113">
+            <available file="C:/Users/Nguyen Nhat Tam/Downloads/PROFES/Ky4_FPT/PRJ301/apache-tomcat-9.0.113/lib/servlet-api.jar"/>
+        </condition>
+
+        <!-- Priority 3: Standard Windows Tomcat installations -->
+        <condition property="j2ee.server.home" value="C:/Program Files/Apache Software Foundation/Tomcat 9.0">
+            <available file="C:/Program Files/Apache Software Foundation/Tomcat 9.0/lib/servlet-api.jar"/>
+        </condition>
+
+        <!-- Priority 4: Bundled local self-contained server stub -->
+        <condition property="j2ee.server.home" value="${basedir}/lib/tomcat-server">
+            <available file="${basedir}/lib/tomcat-server/lib/servlet-api.jar"/>
+        </condition>
+    </target>
     <import file="nbproject/build-impl.xml"/>
     <!--
 

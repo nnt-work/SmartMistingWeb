@@ -29,12 +29,12 @@ public class LoginServlet extends HttpServlet {
 
         String error = request.getParameter("error");
         if ("account_locked".equals(error)) {
-            request.setAttribute("errorMessage", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Quản trị viên.");
+            request.setAttribute("errorMessage", "Your account has been locked. Please contact the administrator.");
         } else if ("logged_out".equals(request.getParameter("msg"))) {
-            request.setAttribute("successMessage", "Bạn đã đăng xuất thành công.");
+            request.setAttribute("successMessage", "You have been logged out successfully.");
         }
 
-        request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(request, response);
     }
 
     @Override
@@ -45,9 +45,9 @@ public class LoginServlet extends HttpServlet {
         String redirect = request.getParameter("redirect");
 
         if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.");
+            request.setAttribute("errorMessage", "Please enter both username and password.");
             request.setAttribute("username", username);
-            request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(request, response);
             return;
         }
 
@@ -58,23 +58,25 @@ public class LoginServlet extends HttpServlet {
                 // Check if account exists but is locked
                 AppUser existing = userDAO.getUserByUsername(username.trim());
                 if (existing != null && existing.isIsLocked()) {
-                    request.setAttribute("errorMessage", "Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ Admin.");
+                    request.setAttribute("errorMessage", "Your account is currently locked. Please contact the administrator.");
                 } else {
-                    request.setAttribute("errorMessage", "Tên đăng nhập hoặc mật khẩu không chính xác.");
+                    request.setAttribute("errorMessage", "Invalid username or password.");
                 }
                 request.setAttribute("username", username);
-                request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(request, response);
                 return;
             }
 
             if (user.isIsLocked()) {
-                request.setAttribute("errorMessage", "Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ Admin.");
+                request.setAttribute("errorMessage", "Your account is currently locked. Please contact the administrator.");
                 request.setAttribute("username", username);
-                request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(request, response);
                 return;
             }
 
             // Create new session
+            HttpSession previous = request.getSession(false);
+            if (previous != null) previous.invalidate();
             HttpSession session = request.getSession(true);
             session.setAttribute("user", user);
             session.setAttribute("userId", user.getUserId());
@@ -82,11 +84,14 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("fullName", user.getFullName());
             session.setAttribute("role", user.getRoleCode());
 
-            // Log activity
-            logDAO.log("ADMIN", null, user.getUserId(), null, "LOGIN",
-                    "Người dùng [" + user.getUsername() + " - " + user.getRoleCode() + "] đăng nhập thành công.");
+            // Log activity (guarded for offline capability)
+            try {
+                logDAO.log("ADMIN", null, user.getUserId(), null, "LOGIN",
+                        "User [" + user.getUsername() + " - " + user.getRoleCode() + "] logged in successfully.");
+            } catch (Exception ignored) {
+            }
 
-            if (redirect != null && !redirect.trim().isEmpty() && !redirect.contains("/login") && !redirect.contains("/logout")) {
+            if (redirect != null && redirect.startsWith("/") && !redirect.startsWith("//") && !redirect.contains(":") && !redirect.contains("\\") && !redirect.trim().isEmpty() && !redirect.contains("/login") && !redirect.contains("/logout")) {
                 response.sendRedirect(request.getContextPath() + redirect);
             } else {
                 response.sendRedirect(request.getContextPath() + "/dashboard");
@@ -94,9 +99,9 @@ public class LoginServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("errorMessage", "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage());
+            request.setAttribute("errorMessage", "Database connection error: " + e.getMessage());
             request.setAttribute("username", username);
-            request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(request, response);
         }
     }
 }

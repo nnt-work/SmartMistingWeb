@@ -1,15 +1,13 @@
--- ============================================================
--- FILE: 01_schema.sql
--- DATABASE: MistingDB
--- PROJECT: Smart Misting PRJ301 – Group 5
--- ============================================================
-
-CREATE DATABASE MistingDB;
+-- PRJ301 Smart Misting. SQL Server 2019. Non-destructive, rerunnable setup.
+-- This script preserves existing data. No DROP DATABASE or DELETE is performed.
+USE master;
+GO
+IF DB_ID(N'MistingDB') IS NULL EXEC(N'CREATE DATABASE MistingDB');
 GO
 USE MistingDB;
 GO
-
--- 1. AppUser – Tài khoản người dùng
+-- 1. AppUser – System Users & Credentials (MD5 Hashed)
+IF OBJECT_ID(N'dbo.AppUser',N'U') IS NULL
 CREATE TABLE AppUser (
     user_id        INT IDENTITY(1,1) PRIMARY KEY,
     username       NVARCHAR(50)  NOT NULL UNIQUE,
@@ -18,17 +16,21 @@ CREATE TABLE AppUser (
     email          NVARCHAR(100),
     role_code      NVARCHAR(10)  NOT NULL 
                    CHECK (role_code IN ('ADMIN','STAFF','VIEWER')),
+    status_text    NVARCHAR(100) DEFAULT 'Active',
     is_locked      BIT NOT NULL DEFAULT 0,
     is_deleted     BIT NOT NULL DEFAULT 0,
     created_at     DATETIME2 DEFAULT SYSDATETIME(),
     updated_at     DATETIME2 DEFAULT SYSDATETIME()
 );
 
--- 2. Plant – Hồ sơ cây
+-- 2. Plant – Botanical Profiles & Optimal Irrigation Ranges
+IF OBJECT_ID(N'dbo.Plant',N'U') IS NULL
 CREATE TABLE Plant (
     plant_id      INT IDENTITY(1,1) PRIMARY KEY,
     plant_name    NVARCHAR(100) NOT NULL,
     species       NVARCHAR(100),
+    humidity_on   FLOAT DEFAULT 60.0,
+    humidity_off  FLOAT DEFAULT 70.0,
     planted_date  DATE,
     note          NVARCHAR(500),
     is_deleted    BIT NOT NULL DEFAULT 0,
@@ -36,7 +38,8 @@ CREATE TABLE Plant (
     created_at    DATETIME2 DEFAULT SYSDATETIME()
 );
 
--- 3. Device – Thiết bị ESP32/Arduino
+-- 3. Device – Microcontroller Units (Arduino Uno / Nano)
+IF OBJECT_ID(N'dbo.Device',N'U') IS NULL
 CREATE TABLE Device (
     device_id    INT IDENTITY(1,1) PRIMARY KEY,
     device_code  NVARCHAR(50) NOT NULL UNIQUE,
@@ -46,20 +49,22 @@ CREATE TABLE Device (
     is_active    BIT NOT NULL DEFAULT 1
 );
 
--- 4. MistingSetting – Cấu hình ngưỡng phun
+-- 4. MistingSetting – Automated Thresholds & Safety Limits
+IF OBJECT_ID(N'dbo.MistingSetting',N'U') IS NULL
 CREATE TABLE MistingSetting (
     device_id      INT PRIMARY KEY REFERENCES Device(device_id),
     humidity_on    FLOAT NOT NULL DEFAULT 60.0,
     humidity_off   FLOAT NOT NULL DEFAULT 70.0,
-    max_run_sec    INT   NOT NULL DEFAULT 10,
-    cooldown_sec   INT   NOT NULL DEFAULT 60,
+    max_run_sec    INT   NOT NULL DEFAULT 15,
+    cooldown_sec   INT   NOT NULL DEFAULT 0,
     desired_mode   NVARCHAR(10) NOT NULL DEFAULT 'AUTO'
                    CHECK (desired_mode IN ('AUTO','MANUAL')),
     version        INT NOT NULL DEFAULT 1,
     updated_at     DATETIME2 DEFAULT SYSDATETIME()
 );
 
--- 5. SensorReading – Số đo từ thiết bị
+-- 5. SensorReading – Telemetry Stream from Sensors
+IF OBJECT_ID(N'dbo.SensorReading',N'U') IS NULL
 CREATE TABLE SensorReading (
     reading_id       BIGINT IDENTITY(1,1) PRIMARY KEY,
     device_id        INT REFERENCES Device(device_id),
@@ -74,10 +79,18 @@ CREATE TABLE SensorReading (
     measured_at      DATETIME2,
     received_at      DATETIME2 DEFAULT SYSDATETIME(),
     is_sample        BIT NOT NULL DEFAULT 0,
+    is_raining       BIT NOT NULL DEFAULT 0,
+    water_pct        FLOAT NULL CHECK (water_pct BETWEEN 0 AND 100),
+    lock_reason      NVARCHAR(30) NULL,
+    air_temperature  FLOAT NULL,                       -- Ambient air temperature from DHT11 (°C)
+    air_humidity     FLOAT NULL,                       -- Ambient air relative humidity from DHT11 (%)
+    dht_ok           BIT NOT NULL DEFAULT 0,           -- 1 when DHT11 sensor reading is valid
+    heat_stress      BIT NOT NULL DEFAULT 0,           -- 1 when thermal override (temp >= 38C) active
     CONSTRAINT UQ_device_packet UNIQUE (device_id, packet_id)
 );
 
--- 6. ControlCommand – Lệnh điều khiển
+-- 6. ControlCommand – Actuator Commands & Feedback
+IF OBJECT_ID(N'dbo.ControlCommand',N'U') IS NULL
 CREATE TABLE ControlCommand (
     command_id    INT IDENTITY(1,1) PRIMARY KEY,
     device_id     INT REFERENCES Device(device_id),
@@ -89,10 +102,12 @@ CREATE TABLE ControlCommand (
                   CHECK (status IN ('PENDING','ACKED','FAILED','EXPIRED')),
     created_at    DATETIME2 DEFAULT SYSDATETIME(),
     expires_at    DATETIME2,
-    ack_at        DATETIME2
+    ack_at        DATETIME2,
+    dispatched_at DATETIME2
 );
 
--- 7. ActivityLog – Nhật ký hoạt động
+-- 7. ActivityLog – SCADA Audit Trail & Operations History
+IF OBJECT_ID(N'dbo.ActivityLog',N'U') IS NULL
 CREATE TABLE ActivityLog (
     log_id      BIGINT IDENTITY(1,1) PRIMARY KEY,
     device_id   INT REFERENCES Device(device_id),
@@ -106,4 +121,31 @@ CREATE TABLE ActivityLog (
     occurred_at DATETIME2 DEFAULT SYSDATETIME(),
     is_sample   BIT NOT NULL DEFAULT 0
 );
+
+-- 8. RolePermission – Dynamic RBAC Access Control Matrix
+IF OBJECT_ID(N'dbo.RolePermission',N'U') IS NULL
+CREATE TABLE RolePermission (
+    role_code       NVARCHAR(10) NOT NULL CHECK (role_code IN ('ADMIN','STAFF','VIEWER')),
+    module_code     NVARCHAR(50) NOT NULL,
+    can_access      BIT NOT NULL DEFAULT 0,
+    PRIMARY KEY (role_code, module_code)
+);
+GO
+
+-- 9. Performance Indexes for Real-time SCADA Polling & Query Optimization
+IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='idx_sensor_device_time' AND object_id=OBJECT_ID('dbo.SensorReading'))
+CREATE INDEX idx_sensor_device_time ON SensorReading (device_id, reading_id DESC);
+CREATE INDEX idx_sensor_received    ON SensorReading (received_at DESC);
+CREATE INDEX idx_activity_time      ON ActivityLog (occurred_at DESC);
+CREATE INDEX idx_command_device     ON ControlCommand (device_id, created_at DESC);
+GO
+
+GO
+IF COL_LENGTH('SensorReading','water_pct') IS NULL ALTER TABLE SensorReading ADD water_pct FLOAT NULL;
+IF COL_LENGTH('SensorReading','lock_reason') IS NULL ALTER TABLE SensorReading ADD lock_reason NVARCHAR(30) NULL;
+IF COL_LENGTH('SensorReading','air_temperature') IS NULL ALTER TABLE SensorReading ADD air_temperature FLOAT NULL;
+IF COL_LENGTH('SensorReading','air_humidity') IS NULL ALTER TABLE SensorReading ADD air_humidity FLOAT NULL;
+IF COL_LENGTH('SensorReading','dht_ok') IS NULL ALTER TABLE SensorReading ADD dht_ok BIT NOT NULL DEFAULT 0;
+IF COL_LENGTH('SensorReading','heat_stress') IS NULL ALTER TABLE SensorReading ADD heat_stress BIT NOT NULL DEFAULT 0;
+IF COL_LENGTH('ControlCommand','dispatched_at') IS NULL ALTER TABLE ControlCommand ADD dispatched_at DATETIME2 NULL;
 GO

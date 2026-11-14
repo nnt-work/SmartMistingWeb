@@ -1,6 +1,9 @@
 package controller;
 
 import util.DBContext;
+import service.AlertManager;
+import service.Config;
+import service.Heartbeat;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -58,12 +61,26 @@ public class HealthServlet extends HttpServlet {
             DBContext.close(conn, stmt, rs);
         }
 
+        AlertManager am = AlertManager.getInstance();
+        String discordUrl = Config.get("discord.webhook.url", "");
+        String hcUrl = Config.get("healthchecks.ping.url", "");
+
         request.setAttribute("dbConnected", dbConnected);
         request.setAttribute("dbError", dbError);
         request.setAttribute("dbProductName", dbProductName);
         request.setAttribute("dbProductVersion", dbProductVersion);
         request.setAttribute("tableCounts", tableCounts);
 
-        request.getRequestDispatcher("/views/health.jsp").forward(request, response);
+        request.setAttribute("telemetryAgeMs", am.telemetryAgeMs());
+        request.setAttribute("intentionalStop", am.isIntentionalStop());
+        request.setAttribute("lastSample", am.lastWasSample());
+        request.setAttribute("discordConfigured", discordUrl != null && !discordUrl.trim().isEmpty() && !discordUrl.contains("YOUR_WEBHOOK"));
+        request.setAttribute("healthchecksConfigured", hcUrl != null && !hcUrl.trim().isEmpty() && !hcUrl.contains("YOUR-UUID"));
+        request.setAttribute("healthchecksLastPingAt", Heartbeat.getLastPingAt());
+        request.setAttribute("healthchecksLastPingStatus", Heartbeat.getLastPingStatus());
+        request.setAttribute("alertStates", am.getStates());
+        request.setAttribute("recentAlerts", AlertManager.getRecentEvents());
+
+        request.getRequestDispatcher("/WEB-INF/views/health.jsp").forward(request, response);
     }
 }

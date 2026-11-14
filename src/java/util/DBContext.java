@@ -1,60 +1,16 @@
 package util;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-
+import java.sql.*;
+import service.Config;
+/** SQL Server JDBC configuration. Explicit credentials; no password guessing. */
 public class DBContext {
-
-    private static final String DRIVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
-    private static final String HOST = "localhost";
-    private static final int PORT = 1433;
-    private static final String DB_NAME = "MistingDB";
-    private static final String USER = "sa";
-    private static final String PASS = "12345";
-
-    public DBContext() {
-    }
-
-    public static Connection getConnection() throws ClassNotFoundException, SQLException {
-        Class.forName(DRIVER);
-        String url = "jdbc:sqlserver://" + HOST + ":" + PORT + ";databaseName=" + DB_NAME + ";encrypt=false;trustServerCertificate=true;";
-        return DriverManager.getConnection(url, USER, PASS);
-    }
-
-    public static void close(Connection conn, Statement stmt, ResultSet rs) {
-        if (rs != null) {
-            try {
-                rs.close();
-            } catch (SQLException ignored) {
-            }
-        }
-        if (stmt != null) {
-            try {
-                stmt.close();
-            } catch (SQLException ignored) {
-            }
-        }
-        if (conn != null) {
-            try {
-                conn.close();
-            } catch (SQLException ignored) {
-            }
-        }
-    }
-
-    public static boolean testConnection() {
-        Connection conn = null;
-        try {
-            conn = getConnection();
-            return conn != null && !conn.isClosed();
-        } catch (Exception e) {
-            return false;
-        } finally {
-            close(conn, null, null);
-        }
-    }
+ public static Connection getConnection() throws ClassNotFoundException, SQLException {
+  Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+  return DriverManager.getConnection(value("DB_URL","db.url","jdbc:sqlserver://127.0.0.1:1433;databaseName=MistingDB;encrypt=false;trustServerCertificate=true;loginTimeout=3;socketTimeout=5000"),value("DB_USER","db.user","sa"),value("DB_PASSWORD","db.password","12345"));
+ }
+ private static String value(String env,String key,String def){
+  String v=System.getenv(env); if(v==null)v=System.getProperty(key); return v!=null?v:Config.get(key,def);
+ }
+ public static boolean isPortListening(String host,int port,int timeout){try(java.net.Socket s=new java.net.Socket()){s.connect(new java.net.InetSocketAddress(host,port),timeout);return true;}catch(Exception e){return false;}}
+ public static boolean testConnection(){try(Connection c=getConnection()){return c.isValid(2);}catch(Exception e){return false;}}
+ public static void close(Connection c,Statement s,ResultSet r){try{if(r!=null)r.close();}catch(Exception ignored){}try{if(s!=null)s.close();}catch(Exception ignored){}try{if(c!=null)c.close();}catch(Exception ignored){}}
 }

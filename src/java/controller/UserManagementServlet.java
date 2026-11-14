@@ -13,7 +13,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name = "UserManagementServlet", urlPatterns = {"/admin/users"})
+@WebServlet(name = "UserManagementServlet", urlPatterns = {"/admin/users", "/users"})
 public class UserManagementServlet extends HttpServlet {
 
     private final UserDAO userDAO = new UserDAO();
@@ -45,12 +45,14 @@ public class UserManagementServlet extends HttpServlet {
                 }
             }
 
-            request.getRequestDispatcher("/views/admin/users.jsp").forward(request, response);
+            request.setAttribute("activeNav", "users");
+            request.getRequestDispatcher("/dashboard").forward(request, response);
 
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("errorMessage", "Lỗi nạp danh sách tài khoản: " + e.getMessage());
-            request.getRequestDispatcher("/views/admin/users.jsp").forward(request, response);
+            request.setAttribute("errorMessage", "Error loading user accounts: " + e.getMessage());
+            request.setAttribute("activeNav", "users");
+            request.getRequestDispatcher("/dashboard").forward(request, response);
         }
     }
 
@@ -62,13 +64,18 @@ public class UserManagementServlet extends HttpServlet {
         AppUser currentUser = (session != null) ? (AppUser) session.getAttribute("user") : null;
 
         if (currentUser == null || !currentUser.isAdmin()) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ quản trị viên mới có quyền thao tác quản lý người dùng.");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only administrators are authorized to manage user accounts.");
             return;
         }
 
         String action = request.getParameter("action");
 
         try {
+            if("create".equalsIgnoreCase(action)||"update".equalsIgnoreCase(action)) {
+                String role=request.getParameter("role_code"),full=request.getParameter("full_name");
+                if(!"ADMIN".equals(role)&&!"STAFF".equals(role)&&!"VIEWER".equals(role))throw new IllegalArgumentException("Invalid role");
+                if(full==null||full.trim().isEmpty()||full.length()>100)throw new IllegalArgumentException("Full name is required and maximum 100 characters");
+            }
             if ("create".equalsIgnoreCase(action)) {
                 String username = request.getParameter("username");
                 String fullName = request.getParameter("full_name");
@@ -77,13 +84,13 @@ public class UserManagementServlet extends HttpServlet {
                 String password = request.getParameter("password");
 
                 if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-                    session.setAttribute("flashError", "Tên đăng nhập và mật khẩu không được để trống!");
+                    session.setAttribute("flashError", "Username and password cannot be empty!");
                     response.sendRedirect(request.getContextPath() + "/admin/users");
                     return;
                 }
 
                 if (userDAO.getUserByUsername(username.trim()) != null) {
-                    session.setAttribute("flashError", "Tên đăng nhập [" + username.trim() + "] đã tồn tại trong hệ thống!");
+                    session.setAttribute("flashError", "Username [" + username.trim() + "] already exists in the system!");
                     response.sendRedirect(request.getContextPath() + "/admin/users");
                     return;
                 }
@@ -96,9 +103,9 @@ public class UserManagementServlet extends HttpServlet {
 
                 userDAO.createUser(newUser, password);
                 logDAO.log("ADMIN", null, currentUser.getUserId(), null, "USER_CREATE",
-                        "[" + currentUser.getUsername() + "] đã tạo tài khoản mới: " + newUser.getUsername() + " (" + newUser.getRoleCode() + ")");
+                        "[" + currentUser.getUsername() + "] created new user: " + newUser.getUsername() + " (" + newUser.getRoleCode() + ")");
 
-                session.setAttribute("flashSuccess", "Đã tạo tài khoản [" + newUser.getUsername() + "] thành công!");
+                session.setAttribute("flashSuccess", "User account [" + newUser.getUsername() + "] created successfully!");
 
             } else if ("update".equalsIgnoreCase(action)) {
                 int targetId = Integer.parseInt(request.getParameter("user_id"));
@@ -108,7 +115,7 @@ public class UserManagementServlet extends HttpServlet {
 
                 AppUser target = userDAO.getUserById(targetId);
                 if (target == null) {
-                    session.setAttribute("flashError", "Không tìm thấy người dùng cần cập nhật!");
+                    session.setAttribute("flashError", "User account not found!");
                     response.sendRedirect(request.getContextPath() + "/admin/users");
                     return;
                 }
@@ -116,7 +123,7 @@ public class UserManagementServlet extends HttpServlet {
                 // Business rule: Do not demote the last active admin
                 if (target.isAdmin() && !"ADMIN".equalsIgnoreCase(roleCode)) {
                     if (userDAO.countActiveAdmins() <= 1) {
-                        session.setAttribute("flashError", "Không thể hạ quyền Quản trị viên duy nhất trong hệ thống!");
+                        session.setAttribute("flashError", "Cannot demote the only remaining active Administrator!");
                         response.sendRedirect(request.getContextPath() + "/admin/users");
                         return;
                     }
@@ -128,14 +135,14 @@ public class UserManagementServlet extends HttpServlet {
 
                 userDAO.updateUser(target);
                 logDAO.log("ADMIN", null, currentUser.getUserId(), null, "USER_UPDATE",
-                        "[" + currentUser.getUsername() + "] đã cập nhật thông tin tài khoản [" + target.getUsername() + "].");
+                        "[" + currentUser.getUsername() + "] updated account details for [" + target.getUsername() + "].");
 
-                session.setAttribute("flashSuccess", "Cập nhật tài khoản [" + target.getUsername() + "] thành công!");
+                session.setAttribute("flashSuccess", "User account [" + target.getUsername() + "] updated successfully!");
 
             } else if ("toggle_lock".equalsIgnoreCase(action)) {
                 int targetId = Integer.parseInt(request.getParameter("user_id"));
                 if (targetId == currentUser.getUserId()) {
-                    session.setAttribute("flashError", "Bạn không thể tự khóa tài khoản của chính mình!");
+                    session.setAttribute("flashError", "You cannot lock your own account!");
                     response.sendRedirect(request.getContextPath() + "/admin/users");
                     return;
                 }
@@ -145,16 +152,16 @@ public class UserManagementServlet extends HttpServlet {
                     boolean newLockState = !target.isIsLocked();
                     // Prevent locking last admin
                     if (target.isAdmin() && newLockState && userDAO.countActiveAdmins() <= 1) {
-                        session.setAttribute("flashError", "Không thể khóa Quản trị viên đang hoạt động duy nhất!");
+                        session.setAttribute("flashError", "Cannot lock the only remaining active Administrator!");
                         response.sendRedirect(request.getContextPath() + "/admin/users");
                         return;
                     }
 
                     userDAO.setLockStatus(targetId, newLockState);
                     logDAO.log("ADMIN", null, currentUser.getUserId(), null, "USER_LOCK",
-                            "[" + currentUser.getUsername() + "] đã " + (newLockState ? "KHÓA" : "MỞ KHÓA") + " tài khoản [" + target.getUsername() + "].");
+                            "[" + currentUser.getUsername() + "] " + (newLockState ? "LOCKED" : "UNLOCKED") + " account [" + target.getUsername() + "].");
 
-                    session.setAttribute("flashSuccess", (newLockState ? "Đã khóa" : "Đã mở khóa") + " tài khoản [" + target.getUsername() + "].");
+                    session.setAttribute("flashSuccess", (newLockState ? "Locked" : "Unlocked") + " account [" + target.getUsername() + "].");
                 }
 
             } else if ("reset_password".equalsIgnoreCase(action)) {
@@ -163,15 +170,15 @@ public class UserManagementServlet extends HttpServlet {
                 if (target != null) {
                     userDAO.updatePassword(targetId, "12345");
                     logDAO.log("ADMIN", null, currentUser.getUserId(), null, "PASSWORD_RESET",
-                            "[" + currentUser.getUsername() + "] đã đặt lại mật khẩu cho [" + target.getUsername() + "] về mặc định: 12345");
+                            "[" + currentUser.getUsername() + "] reset password for [" + target.getUsername() + "] to default: 12345");
 
-                    session.setAttribute("flashSuccess", "Đã đặt lại mật khẩu cho [" + target.getUsername() + "] thành: 12345");
+                    session.setAttribute("flashSuccess", "Reset password for [" + target.getUsername() + "] to default: 12345");
                 }
 
             } else if ("delete".equalsIgnoreCase(action)) {
                 int targetId = Integer.parseInt(request.getParameter("user_id"));
                 if (targetId == currentUser.getUserId()) {
-                    session.setAttribute("flashError", "Bạn không thể tự xóa tài khoản của chính mình!");
+                    session.setAttribute("flashError", "You cannot delete your own account!");
                     response.sendRedirect(request.getContextPath() + "/admin/users");
                     return;
                 }
@@ -179,16 +186,16 @@ public class UserManagementServlet extends HttpServlet {
                 AppUser target = userDAO.getUserById(targetId);
                 if (target != null) {
                     if (target.isAdmin() && userDAO.countActiveAdmins() <= 1) {
-                        session.setAttribute("flashError", "Không thể xóa Quản trị viên đang hoạt động duy nhất!");
+                        session.setAttribute("flashError", "Cannot delete the only remaining active Administrator!");
                         response.sendRedirect(request.getContextPath() + "/admin/users");
                         return;
                     }
 
                     userDAO.deleteUser(targetId);
                     logDAO.log("ADMIN", null, currentUser.getUserId(), null, "USER_DELETE",
-                            "[" + currentUser.getUsername() + "] đã xóa tài khoản [" + target.getUsername() + "].");
+                            "[" + currentUser.getUsername() + "] deleted account [" + target.getUsername() + "].");
 
-                    session.setAttribute("flashSuccess", "Đã xóa tài khoản [" + target.getUsername() + "].");
+                    session.setAttribute("flashSuccess", "Deleted user account [" + target.getUsername() + "] successfully.");
                 }
             }
 
@@ -196,7 +203,7 @@ public class UserManagementServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            session.setAttribute("flashError", "Lỗi thao tác người dùng: " + e.getMessage());
+            session.setAttribute("flashError", "User management error: " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/admin/users");
         }
     }

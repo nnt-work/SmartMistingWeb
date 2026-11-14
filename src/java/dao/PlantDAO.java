@@ -19,7 +19,7 @@ public class PlantDAO {
         ResultSet rs = null;
         try {
             conn = DBContext.getConnection();
-            StringBuilder sql = new StringBuilder("SELECT p.plant_id, p.plant_name, p.species, p.planted_date, p.note, p.is_deleted, p.created_by, p.created_at, u.full_name AS creator_name "
+            StringBuilder sql = new StringBuilder("SELECT p.plant_id, p.plant_name, p.species, p.planted_date, p.note, p.humidity_on, p.humidity_off, p.is_deleted, p.created_by, p.created_at, u.full_name AS creator_name "
                                                 + "FROM Plant p LEFT JOIN AppUser u ON p.created_by = u.user_id "
                                                 + "WHERE p.is_deleted = 0 ");
             if (keyword != null && !keyword.trim().isEmpty()) {
@@ -83,7 +83,7 @@ public class PlantDAO {
         ResultSet rs = null;
         try {
             conn = DBContext.getConnection();
-            String sql = "SELECT p.plant_id, p.plant_name, p.species, p.planted_date, p.note, p.is_deleted, p.created_by, p.created_at, u.full_name AS creator_name "
+            String sql = "SELECT p.plant_id, p.plant_name, p.species, p.planted_date, p.note, p.humidity_on, p.humidity_off, p.is_deleted, p.created_by, p.created_at, u.full_name AS creator_name "
                        + "FROM Plant p LEFT JOIN AppUser u ON p.created_by = u.user_id "
                        + "WHERE p.plant_id = ? AND p.is_deleted = 0";
             ps = conn.prepareStatement(sql);
@@ -103,17 +103,19 @@ public class PlantDAO {
         PreparedStatement ps = null;
         try {
             conn = DBContext.getConnection();
-            String sql = "INSERT INTO Plant (plant_name, species, planted_date, note, is_deleted, created_by, created_at) "
-                       + "VALUES (?, ?, ?, ?, 0, ?, SYSDATETIME())";
+            String sql = "INSERT INTO Plant (plant_name, species, planted_date, note, humidity_on, humidity_off, is_deleted, created_by, created_at) "
+                       + "VALUES (?, ?, ?, ?, ?, ?, 0, ?, SYSDATETIME())";
             ps = conn.prepareStatement(sql);
             ps.setString(1, plant.getPlantName());
             ps.setString(2, plant.getSpecies());
             ps.setDate(3, plant.getPlantedDate());
             ps.setString(4, plant.getNote());
+            if (plant.getHumidityOn() != null) ps.setDouble(5, plant.getHumidityOn()); else ps.setNull(5, java.sql.Types.DECIMAL);
+            if (plant.getHumidityOff() != null) ps.setDouble(6, plant.getHumidityOff()); else ps.setNull(6, java.sql.Types.DECIMAL);
             if (plant.getCreatedBy() != null) {
-                ps.setInt(5, plant.getCreatedBy());
+                ps.setInt(7, plant.getCreatedBy());
             } else {
-                ps.setNull(5, java.sql.Types.INTEGER);
+                ps.setNull(7, java.sql.Types.INTEGER);
             }
             return ps.executeUpdate() > 0;
         } finally {
@@ -126,14 +128,16 @@ public class PlantDAO {
         PreparedStatement ps = null;
         try {
             conn = DBContext.getConnection();
-            String sql = "UPDATE Plant SET plant_name = ?, species = ?, planted_date = ?, note = ? "
+            String sql = "UPDATE Plant SET plant_name = ?, species = ?, planted_date = ?, note = ?, humidity_on = ?, humidity_off = ? "
                        + "WHERE plant_id = ? AND is_deleted = 0";
             ps = conn.prepareStatement(sql);
             ps.setString(1, plant.getPlantName());
             ps.setString(2, plant.getSpecies());
             ps.setDate(3, plant.getPlantedDate());
             ps.setString(4, plant.getNote());
-            ps.setInt(5, plant.getPlantId());
+            if (plant.getHumidityOn() != null) ps.setDouble(5, plant.getHumidityOn()); else ps.setNull(5, java.sql.Types.DECIMAL);
+            if (plant.getHumidityOff() != null) ps.setDouble(6, plant.getHumidityOff()); else ps.setNull(6, java.sql.Types.DECIMAL);
+            ps.setInt(7, plant.getPlantId());
             return ps.executeUpdate() > 0;
         } finally {
             DBContext.close(conn, ps, null);
@@ -161,6 +165,10 @@ public class PlantDAO {
         p.setSpecies(rs.getString("species"));
         p.setPlantedDate(rs.getDate("planted_date"));
         p.setNote(rs.getString("note"));
+        double hOn = rs.getDouble("humidity_on");
+        if (!rs.wasNull()) p.setHumidityOn(hOn);
+        double hOff = rs.getDouble("humidity_off");
+        if (!rs.wasNull()) p.setHumidityOff(hOff);
         p.setIsDeleted(rs.getBoolean("is_deleted"));
         int createdBy = rs.getInt("created_by");
         if (!rs.wasNull()) {

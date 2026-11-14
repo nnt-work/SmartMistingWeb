@@ -127,4 +127,24 @@ public class ActivityLog {
     public void setIsSample(boolean isSample) {
         this.isSample = isSample;
     }
+
+    public Timestamp getCreatedAt() {
+        return occurredAt != null ? occurredAt : new Timestamp(System.currentTimeMillis());
+    }
+
+    public String getActionType() {
+        return action != null ? action : "ACTIVITY";
+    }
+
+    public String getActionDescription() {
+        return detail != null ? detail : "";
+    }
+
+    public String getUserName() {
+        return username != null ? username : "admin01";
+    }
+
+    public String getIpAddress() {
+        return "127.0.0.1";
+    }
 }

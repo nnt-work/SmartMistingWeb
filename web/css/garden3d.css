@@ -1,0 +1,899 @@
+/* ==========================================================================
+   Smart Garden 3D Digital Twin — Spatial Glassmorphism Studio Theme
+   Zero-Box Seamless Canvas · 3D Beveled Glass Borders · On-Demand Pins
+   ========================================================================== */
+
+:root {
+  --g3d-bg-deep: #050507;
+  --g3d-bg-surface: rgba(14, 14, 18, 0.72);
+  --g3d-bg-elevated: rgba(20, 20, 26, 0.84);
+  --g3d-border: rgba(255, 255, 255, 0.12);
+  --g3d-border-bright: rgba(255, 255, 255, 0.26);
+  --g3d-bevel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 1px 0 0 rgba(255, 255, 255, 0.10), 0 16px 36px rgba(0, 0, 0, 0.45);
+  --g3d-emerald: #10b981;
+  --g3d-emerald-glow: rgba(16, 185, 129, 0.38);
+  --g3d-cyan: #06b6d4;
+  --g3d-cyan-glow: rgba(6, 182, 212, 0.38);
+  --g3d-amber: #f59e0b;
+  --g3d-crimson: #ef4444;
+  --g3d-text-main: #f8fafc;
+  --g3d-text-muted: #94a3b8;
+  --g3d-font: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --g3d-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Chỉ áp dụng min-height 660px nếu thẻ chứa trực tiếp mô hình 3D (.garden3d),
+   TUYỆT ĐỐI không áp dụng cho thẻ biểu đồ bên trong #telemetry-drawer */
+#dashboard-chart-card:has(.garden3d) {
+  min-height: 660px !important;
+  height: auto !important;
+}
+
+#telemetry-drawer #dashboard-chart-card,
+#dashboard-chart-card.bio-comfort-chart-card {
+  min-height: 0 !important;
+  height: auto !important;
+  flex: 0 0 auto !important;
+}
+
+#dashboard-grid-container {
+  flex: 0 0 auto !important;
+  max-height: none !important;
+}
+
+#dashboard-chart-card .garden3d {
+  flex: 1 0 580px;
+}
+
+/* Seamless Studio Canvas — No Hard Black Box Frame */
+.garden3d,
+#digital-twin-viewport {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 560px;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  overflow: hidden;
+  background:
+    radial-gradient(1.2px 1.2px at 15% 22%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1.4px 1.4px at 68% 18%, rgba(255, 255, 255, 0.40), transparent),
+    radial-gradient(1.0px 1.0px at 35% 72%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1.3px 1.3px at 84% 65%, rgba(255, 255, 255, 0.40), transparent),
+    radial-gradient(ellipse 85% 65% at 50% 36%, rgba(255, 255, 255, 0.02) 0%, rgba(10, 10, 14, 0.65) 50%, #030305 100%);
+  color: var(--g3d-text-main);
+  font-family: var(--g3d-font);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: background 0.35s ease, border-color 0.3s ease;
+}
+
+html.light .garden3d,
+html.light #digital-twin-viewport {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  background:
+    radial-gradient(ellipse 95% 75% at 50% 28%, rgba(255, 255, 255, 0.95) 0%, rgba(240, 244, 248, 0.5) 45%, transparent 75%),
+    linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%) !important;
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+  color: #0f172a !important;
+}
+
+.garden3d *,
+#digital-twin-viewport * {
+  box-sizing: border-box;
+}
+
+/* Top Toolbar & Bottom Orbit Dock (Translucent 3D Glass Capsule) */
+.garden3d-toolbar,
+.garden3d-footer {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px;
+  flex-wrap: wrap;
+  background: rgba(14, 14, 18, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  color: #f8fafc !important;
+}
+
+/* Ẩn toolbar/footer mặc định khi nằm trong Dashboard có HUD nổi để tránh đè lên Đồng hồ & Studio Micro-Bar */
+#digital-twin-viewport > .garden3d-toolbar,
+#digital-twin-viewport > .garden3d-footer,
+#digital-twin-viewport .garden3d > .garden3d-toolbar,
+#digital-twin-viewport .garden3d > .garden3d-footer {
+  display: none !important;
+}
+
+.garden3d-eyebrow {
+  font-family: var(--g3d-font);
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--g3d-emerald);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.garden3d-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--g3d-emerald);
+  box-shadow: 0 0 10px var(--g3d-emerald);
+  animation: pulseEmerald 2s infinite ease-in-out;
+}
+
+@keyframes pulseEmerald {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* High-Contrast Glass Buttons (Readable in both Dark & Light Themes) */
+.garden3d button,
+#digital-twin-viewport .garden3d-explore button,
+#digital-twin-viewport .garden3d-zoom button,
+#digital-twin-viewport .garden3d-inspector button {
+  font-family: var(--g3d-font);
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.2px;
+  color: #f1f5f9 !important;
+  background: rgba(18, 18, 24, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 30px;
+  padding: 5px 13px;
+  margin: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 4px 12px rgba(0, 0, 0, 0.25);
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.garden3d button:hover,
+#digital-twin-viewport .garden3d-explore button:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.55);
+  color: #6ee7b7 !important;
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 16px rgba(16, 185, 129, 0.22);
+}
+
+.garden3d button[aria-pressed="true"],
+#digital-twin-viewport .garden3d-explore button[aria-pressed="true"] {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.92) 0%, rgba(5, 150, 105, 0.95) 100%);
+  color: #02130d !important;
+  font-weight: 700;
+  border-color: #6ee7b7;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Sub-toolbar Camera View Presets (Hidden in favor of Studio Micro-Bar) */
+.garden3d-explore {
+  display: none !important;
+}
+
+.garden3d-presets {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 1px;
+}
+.garden3d-presets::-webkit-scrollbar {
+  display: none;
+}
+
+.garden3d-presets button {
+  padding: 4px 11px;
+  white-space: nowrap;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.garden3d .garden3d-full {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+/* Stage & Three.js Canvas */
+.garden3d-stage {
+  position: relative;
+  flex: 1;
+  min-height: 480px;
+  min-width: 0;
+  outline: none;
+  touch-action: none;
+  cursor: grab;
+  overflow: hidden;
+  background: transparent;
+}
+
+.garden3d-stage.is-dragging {
+  cursor: grabbing;
+}
+
+.garden3d-stage > canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+
+/* Đảm bảo canvas biểu đồ Telemetry không bao giờ bị phình kích thước khi DPI > 1 */
+#canvasTelemetry {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ==========================================================================
+   ON-DEMAND 3D SENSOR HOTSPOT PINS
+   ========================================================================== */
+.garden3d .garden3d-label,
+#digital-twin-viewport .garden3d-label {
+  position: absolute;
+  z-index: 4;
+  pointer-events: auto;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 4px 10px 4px 22px !important;
+  background: rgba(14, 14, 18, 0.72) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 999px !important;
+  transform: translate(-50%, -100%);
+  color: #f8fafc !important;
+  font-family: var(--g3d-font);
+  font-size: 10.5px;
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  opacity: 0.78;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.garden3d .garden3d-label::before,
+#digital-twin-viewport .garden3d-label::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sensor-color, var(--g3d-emerald));
+  box-shadow: 0 0 8px var(--sensor-color, var(--g3d-emerald));
+}
+
+.garden3d-label::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1px;
+  height: 10px;
+  background: linear-gradient(to bottom, var(--sensor-color, var(--g3d-emerald)), transparent);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.garden3d-label span {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
+}
+
+.garden3d-label strong {
+  display: inline-block;
+  font-family: var(--g3d-mono);
+  font-weight: 700;
+  font-size: 11.5px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+
+.garden3d-label small {
+  display: none;
+  font-size: 9px;
+  color: #94a3b8;
+  padding-left: 4px;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.garden3d .garden3d-label:hover,
+.garden3d .garden3d-label.is-focused,
+.garden3d-stage.garden3d-expand-labels .garden3d-label,
+#digital-twin-viewport .garden3d-label:hover,
+#digital-twin-viewport .garden3d-label.is-focused {
+  opacity: 1;
+  padding: 6px 13px 6px 24px !important;
+  background: rgba(16, 16, 22, 0.90) !important;
+  border-color: var(--sensor-color, var(--g3d-emerald)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), 0 10px 28px rgba(0, 0, 0, 0.65), 0 0 16px rgba(16, 185, 129, 0.22) !important;
+  transform: translate(-50%, -108%) scale(1.04);
+  z-index: 12;
+}
+
+.garden3d .garden3d-label:hover span,
+.garden3d .garden3d-label.is-focused span,
+.garden3d-stage.garden3d-expand-labels .garden3d-label span,
+#digital-twin-viewport .garden3d-label:hover span,
+#digital-twin-viewport .garden3d-label.is-focused span {
+  max-width: 120px;
+  opacity: 1;
+  margin-right: 4px;
+}
+
+.garden3d .garden3d-label:hover small,
+.garden3d .garden3d-label.is-focused small,
+#digital-twin-viewport .garden3d-label:hover small,
+#digital-twin-viewport .garden3d-label.is-focused small {
+  display: inline-block;
+}
+
+.garden3d [hidden] {
+  display: none !important;
+}
+
+.garden3d-stage.garden3d-hide-labels .garden3d-label {
+  display: none !important;
+}
+
+/* Glassmorphic Zoom Controls */
+.garden3d-zoom {
+  position: absolute;
+  left: 16px;
+  bottom: 136px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+  padding: 7px;
+  background: rgba(14, 14, 18, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  box-shadow: var(--g3d-bevel-shadow);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.garden3d-zoom button {
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 50%;
+}
+
+.garden3d-zoom label {
+  height: 78px;
+  width: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.garden3d-zoom input {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  appearance: auto;
+  accent-color: var(--g3d-emerald);
+  width: 16px;
+  height: 72px;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.garden3d-zoom output {
+  font-family: var(--g3d-mono);
+  font-weight: 700;
+  font-size: 9.5px;
+  color: #34d399;
+  min-width: 30px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 0;
+}
+
+/* Component Detail Inspector Card (Suppressed in favor of Unified #morph-detail-card) */
+.garden3d-inspector {
+  display: none !important;
+}
+
+@keyframes slideInInspector {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.garden3d-inspector h4 {
+  font-family: var(--g3d-font);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+  margin: 6px 18px 4px 0;
+  color: #ffffff;
+}
+
+.garden3d-inspector > strong {
+  font-family: var(--g3d-mono);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.25;
+  color: #34d399;
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.garden3d-inspector p {
+  font-size: 11.5px;
+  line-height: 1.55;
+  margin: 6px 0 10px;
+  color: #cbd5e1;
+}
+
+.garden3d-inspector small {
+  font-size: 9.5px;
+  display: block;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  color: #94a3b8;
+}
+
+.garden3d .garden3d-close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 50%;
+  padding: 0;
+}
+
+/* Footer Status */
+.garden3d-footer {
+  font-size: 11px;
+  color: #cbd5e1 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: none;
+  min-height: 40px;
+  padding: 8px 18px;
+}
+
+.garden3d-status {
+  font-weight: 600;
+  color: #34d399 !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.garden3d-error {
+  padding: 40px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #f87171;
+  text-align: center;
+}
+
+.garden3d-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* Fullscreen / Expanded Stage */
+.garden3d:fullscreen,
+.garden3d.garden3d-expanded {
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+  border: 0;
+  border-radius: 0;
+  margin: 0 !important;
+}
+
+.garden3d.garden3d-expanded {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+}
+
+@media (max-width: 768px) {
+  .garden3d-explore {
+    top: 56px;
+    left: 10px;
+    max-width: calc(100vw - 24px);
+  }
+  .garden3d-zoom {
+    left: 10px;
+    bottom: 128px;
+  }
+}
+
+/* Light Mode 3D HUD Pins & Controls */
+html.light .garden3d .garden3d-label,
+html.light #digital-twin-viewport .garden3d-label {
+  background: rgba(255, 255, 255, 0.90) !important;
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), 0 6px 18px rgba(15, 23, 42, 0.08) !important;
+  color: #0f172a !important;
+}
+html.light .garden3d-label span { color: #0f172a !important; }
+html.light .garden3d-label strong { color: #059669 !important; }
+html.light .garden3d-label small { color: #64748b !important; }
+
+html.light .garden3d-zoom {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08) !important;
+  color: #0f172a !important;
+}
+html.light .garden3d-zoom button {
+  background: rgba(15, 23, 42, 0.05) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+html.light .garden3d-zoom output {
+  color: #059669 !important;
+}
+
+/* ==========================================================================
+   3D Studio Single Micro-Bar Dock (Bottom Axis Centered)
+   ========================================================================== */
+#g3d-studio-dock,
+.g3d-studio-dock {
+  position: absolute;
+  bottom: 22px;
+  left: 96px;
+  z-index: 45;
+  transform: none;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+  user-select: none;
+  touch-action: none;
+}
+
+.g3d-drag-handle {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px 6px !important;
+  cursor: grab !important;
+  color: var(--text-muted, #94a3b8) !important;
+  border-radius: 6px !important;
+  transition: color 0.15s ease, background 0.15s ease !important;
+  touch-action: none !important;
+}
+.g3d-drag-handle:hover {
+  color: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+#g3d-studio-dock.is-dragging,
+#g3d-studio-dock.is-dragging .g3d-drag-handle,
+#g3d-studio-dock.is-dragging .garden3d-micro-bar {
+  cursor: grabbing !important;
+  transition: none !important;
+}
+
+.garden3d-micro-bar {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 14px !important;
+  border-radius: 9999px !important;
+  background: rgba(14, 14, 18, 0.82) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  color: #f8fafc !important;
+  pointer-events: auto !important;
+  user-select: none !important;
+  font-family: var(--g3d-font, inherit) !important;
+  font-size: 11px !important;
+}
+
+html.light .garden3d-micro-bar {
+  background: rgba(255, 255, 255, 0.90) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+  color: #0f172a !important;
+}
+
+.micro-bar-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc !important;
+  padding: 4px 10px !important;
+  border-radius: 9999px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+.micro-bar-btn:hover {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  color: #34d399 !important;
+}
+.micro-bar-btn.active {
+  background: rgba(16, 185, 129, 0.28) !important;
+  border-color: #10b981 !important;
+  color: #10b981 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35) !important;
+}
+
+html.light .micro-bar-btn {
+  background: rgba(15, 23, 42, 0.05) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+html.light .micro-bar-btn:hover {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #059669 !important;
+}
+html.light .micro-bar-btn.active {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: #10b981 !important;
+  color: #059669 !important;
+}
+
+.micro-bar-sep {
+  opacity: 0.3 !important;
+  font-size: 12px !important;
+  user-select: none !important;
+  color: inherit !important;
+}
+
+.pan-step-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f8fafc !important;
+  font-size: 9px !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: all 0.15s ease !important;
+}
+.pan-step-btn:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+html.light .pan-step-btn {
+  background: rgba(15, 23, 42, 0.05) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+html.light .pan-step-btn:hover {
+  background: rgba(15, 23, 42, 0.12) !important;
+}
+
+.pan-slider {
+  width: 90px !important;
+  height: 4px !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-radius: 2px !important;
+  outline: none !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease !important;
+}
+.pan-slider:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+.pan-slider::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background: #10b981 !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6) !important;
+  transition: transform 0.15s ease !important;
+}
+.pan-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2) !important;
+}
+.pan-slider::-moz-range-thumb {
+  width: 12px !important;
+  height: 12px !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: #10b981 !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6) !important;
+}
+
+html.light .pan-slider {
+  background: rgba(15, 23, 42, 0.15) !important;
+}
+html.light .pan-slider:hover {
+  background: rgba(15, 23, 42, 0.25) !important;
+}
+
+.pan-reset-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #cbd5e1 !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  padding: 3px 8px !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+.pan-reset-btn:hover {
+  background: rgba(16, 185, 129, 0.18) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #34d399 !important;
+}
+html.light .pan-reset-btn {
+  background: rgba(15, 23, 42, 0.05) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  color: #475569 !important;
+}
+html.light .pan-reset-btn:hover {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #059669 !important;
+}
+
+.pan-val-badge {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #34d399 !important;
+  min-width: 32px !important;
+  text-align: right !important;
+}
+html.light .pan-val-badge {
+  color: #059669 !important;
+}
+
+@media (max-width: 768px) {
+  #g3d-studio-dock,
+  .g3d-studio-dock {
+    bottom: 14px;
+    max-width: calc(100vw - 28px) !important;
+  }
+  .garden3d-micro-bar {
+    padding: 4px 10px !important;
+    gap: 6px !important;
+    transform: scale(0.92) !important;
+  }
+  .pan-slider {
+    width: 60px !important;
+  }
+}
+
+/* ── COLLAPSIBLE 3D STUDIO DOCK ── */
+.micro-bar-toggle-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc !important;
+  padding: 3px 8px !important;
+  border-radius: 9999px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+.micro-bar-toggle-btn:hover {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: #10b981 !important;
+  color: #34d399 !important;
+}
+html.light .micro-bar-toggle-btn {
+  background: rgba(15, 23, 42, 0.05) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}
+#g3d-studio-dock.collapsed #g3d-dock-controls {
+  display: none !important;
+}
+#g3d-studio-dock.collapsed .garden3d-micro-bar {
+  padding: 4px 10px !important;
+}
+
+/* ── Deep-Space Multi-Tier Cosmic Dust with Subtle Parallax Starfield (Zero Zoom / Scaling Canvas) ── */
+#digital-twin-viewport::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(0.8px 0.8px at 25px 35px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1.2px 1.2px at 145px 85px, rgba(255,255,255,0.85), rgba(0,0,0,0)),
+    radial-gradient(0.8px 0.8px at 285px 45px, rgba(255,255,255,0.65), rgba(0,0,0,0)),
+    radial-gradient(1.6px 1.6px at 455px 125px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(0.8px 0.8px at 625px 75px, rgba(255,255,255,0.7), rgba(0,0,0,0)),
+    radial-gradient(1.2px 1.2px at 785px 165px, rgba(255,255,255,0.9), rgba(0,0,0,0)),
+    radial-gradient(0.8px 0.8px at 925px 45px, rgba(255,255,255,0.6), rgba(0,0,0,0)),
+    radial-gradient(1.6px 1.6px at 1055px 115px, rgba(255,255,255,0.85), rgba(0,0,0,0)),
+    radial-gradient(0.8px 0.8px at 75px 225px, rgba(255,255,255,0.55), rgba(0,0,0,0)),
+    radial-gradient(1.2px 1.2px at 325px 265px, rgba(255,255,255,0.75), rgba(0,0,0,0)),
+    radial-gradient(0.8px 0.8px at 585px 215px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1.6px 1.6px at 865px 255px, rgba(255,255,255,0.85), rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 1100px 380px;
+  opacity: 0.32;
+  animation: subtleStarTwinkle 8s ease-in-out infinite alternate;
+}
+@keyframes subtleStarTwinkle {
+  0% { opacity: 0.20; }
+  50% { opacity: 0.42; }
+  100% { opacity: 0.28; }
+}
+html.light #digital-twin-viewport::before {
+  display: none !important;
+}

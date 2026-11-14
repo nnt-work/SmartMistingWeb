@@ -1,42 +1,7 @@
 package util;
-
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
-public class PasswordUtil {
-
-    private PasswordUtil() {
-    }
-
-    /**
-     * Hashes a raw password using MD5 algorithm.
-     * Compatible with sample data: MD5 of "12345" is "827ccb0eea8a706c4c34a16891f84e7b".
-     */
-    public static String hashPassword(String password) {
-        if (password == null) {
-            return "";
-        }
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] bytes = md.digest(password.getBytes("UTF-8"));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : bytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException | java.io.UnsupportedEncodingException e) {
-            throw new RuntimeException("Error hashing password", e);
-        }
-    }
-
-    /**
-     * Verifies if raw password matches the stored MD5 hash.
-     */
-    public static boolean verify(String rawPassword, String storedHash) {
-        if (rawPassword == null || storedHash == null) {
-            return false;
-        }
-        String calculated = hashPassword(rawPassword);
-        return calculated.equalsIgnoreCase(storedHash);
-    }
+import java.security.*;import javax.crypto.SecretKeyFactory;import javax.crypto.spec.PBEKeySpec;import java.util.Base64;
+public final class PasswordUtil {
+ public static String hashPassword(String value){try{byte[] salt=new byte[16];new SecureRandom().nextBytes(salt);int iterations=120000;return "pbkdf2$"+iterations+"$"+Base64.getEncoder().encodeToString(salt)+"$"+Base64.getEncoder().encodeToString(derive(value,salt,iterations));}catch(Exception e){throw new IllegalStateException("Password hashing failed",e);}}
+ private static byte[] derive(String p,byte[] salt,int n)throws Exception{PBEKeySpec spec=new PBEKeySpec(p.toCharArray(),salt,n,256);try{return SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();}finally{spec.clearPassword();}}
+ public static boolean verify(String raw,String stored){if(raw==null||stored==null)return false;try{if(stored.startsWith("pbkdf2$")){String[]p=stored.split("\\$");int n=Integer.parseInt(p[1]);if(n<10000||n>1000000)return false;return MessageDigest.isEqual(derive(raw,Base64.getDecoder().decode(p[2]),n),Base64.getDecoder().decode(p[3]));}if(stored.matches("[0-9a-fA-F]{32}")){byte[] hash=MessageDigest.getInstance("MD5").digest(raw.getBytes("UTF-8"));StringBuilder b=new StringBuilder();for(byte v:hash)b.append(String.format("%02x",v));return b.toString().equalsIgnoreCase(stored);}return false;}catch(Exception e){return false;}}
 }

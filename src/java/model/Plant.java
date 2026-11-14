@@ -9,6 +9,8 @@ public class Plant {
     private String species;
     private Date plantedDate;
     private String note;
+    private Double humidityOn;
+    private Double humidityOff;
     private boolean isDeleted;
     private Integer createdBy;
     private String creatorName;
@@ -66,6 +68,22 @@ public class Plant {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public Double getHumidityOn() {
+        return humidityOn;
+    }
+
+    public void setHumidityOn(Double humidityOn) {
+        this.humidityOn = humidityOn;
+    }
+
+    public Double getHumidityOff() {
+        return humidityOff;
+    }
+
+    public void setHumidityOff(Double humidityOff) {
+        this.humidityOff = humidityOff;
     }
 
     public boolean isIsDeleted() {

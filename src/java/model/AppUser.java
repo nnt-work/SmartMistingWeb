@@ -11,10 +11,12 @@ public class AppUser {
     private String roleCode; // ADMIN, STAFF, VIEWER
     private boolean isLocked;
     private boolean isDeleted;
+    private String statusText;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
     public AppUser() {
+        this.statusText = "Active";
     }
 
     public AppUser(int userId, String username, String passwordHash, String fullName, String email, String roleCode, boolean isLocked, boolean isDeleted, Timestamp createdAt, Timestamp updatedAt) {
@@ -132,5 +134,13 @@ public class AppUser {
 
     public void setDeleted(boolean aBoolean) {
         this.isDeleted = aBoolean;
+    }
+
+    public String getStatusText() {
+        return (statusText != null && !statusText.trim().isEmpty()) ? statusText : "Active";
+    }
+
+    public void setStatusText(String statusText) {
+        this.statusText = statusText;
     }
 }

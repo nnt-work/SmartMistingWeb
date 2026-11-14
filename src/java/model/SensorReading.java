@@ -19,6 +19,13 @@ public class SensorReading {
     private boolean isSample;
     private Boolean isRaining;
 
+    private Double waterPercent;
+    private String lockReason;
+    public Double getWaterPercent(){return waterPercent;}
+    public void setWaterPercent(Double v){waterPercent=v;}
+    public String getLockReason(){return lockReason;}
+    public void setLockReason(String v){lockReason=v;}
+
     public SensorReading() {
         this.sensorOk = true;
         this.pumpOn = false;
@@ -161,4 +168,24 @@ public class SensorReading {
     public void setIsRaining(Boolean isRaining) {
         this.isRaining = isRaining;
     }
+
+    // -------------------------------------------------------------------------
+    // DHT11 Ambient Air Climate Sensor fields (Digital-capable A1)
+    // -------------------------------------------------------------------------
+    private Double airTemperature;   // Ambient air temperature in Celsius from DHT11
+    private Double airHumidity;      // Ambient air relative humidity (%) from DHT11
+    private Boolean dhtOk;           // true when DHT11 sensor is returning valid readings
+    private Boolean heatStress;      // true when air temp >= 38 C (thermal override active)
+
+    public Double getAirTemperature() { return airTemperature; }
+    public void setAirTemperature(Double airTemperature) { this.airTemperature = airTemperature; }
+
+    public Double getAirHumidity() { return airHumidity; }
+    public void setAirHumidity(Double airHumidity) { this.airHumidity = airHumidity; }
+
+    public Boolean getDhtOk() { return dhtOk; }
+    public void setDhtOk(Boolean dhtOk) { this.dhtOk = dhtOk; }
+
+    public Boolean getHeatStress() { return heatStress; }
+    public void setHeatStress(Boolean heatStress) { this.heatStress = heatStress; }
 }

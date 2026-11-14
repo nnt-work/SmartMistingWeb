@@ -19,8 +19,11 @@ public class ControlCommandDAO {
         ResultSet rs = null;
         try {
             conn = DBContext.getConnection();
+            if("STOP".equals(cmd.getCommandType())){
+                try(PreparedStatement cancel=conn.prepareStatement("UPDATE ControlCommand SET status='EXPIRED' WHERE device_id=? AND status='PENDING'")){cancel.setInt(1,cmd.getDeviceId());cancel.executeUpdate();}
+            }
             String sql = "INSERT INTO ControlCommand (device_id, user_id, command_type, payload_json, status, created_at, expires_at, ack_at) "
-                       + "VALUES (?, ?, ?, ?, ?, SYSDATETIME(), DATEADD(second, 30, SYSDATETIME()), NULL)";
+                       + "VALUES (?, ?, ?, ?, ?, SYSDATETIME(), DATEADD(second, 12, SYSDATETIME()), NULL)";
             ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, cmd.getDeviceId());
             if (cmd.getUserId() > 0) {
@@ -98,5 +101,16 @@ public class ControlCommandDAO {
         } finally {
             DBContext.close(conn, ps, null);
         }
+    }
+
+    public ControlCommand claim(int deviceId)throws Exception{
+        try(Connection c=DBContext.getConnection()){
+            try(PreparedStatement expire=c.prepareStatement("UPDATE ControlCommand SET status='EXPIRED' WHERE device_id=? AND status='PENDING' AND expires_at<SYSDATETIME()")){expire.setInt(1,deviceId);expire.executeUpdate();}
+            String sql=";WITH next_cmd AS (SELECT TOP 1 * FROM ControlCommand WITH (UPDLOCK, READPAST, ROWLOCK) WHERE device_id=? AND status='PENDING' AND dispatched_at IS NULL AND expires_at>=SYSDATETIME() ORDER BY command_id) UPDATE next_cmd SET dispatched_at=SYSDATETIME() OUTPUT inserted.command_id,inserted.command_type,inserted.payload_json";
+            try(PreparedStatement p=c.prepareStatement(sql)){p.setInt(1,deviceId);try(ResultSet r=p.executeQuery()){if(!r.next())return null;ControlCommand cmd=new ControlCommand();cmd.setCommandId(r.getInt(1));cmd.setDeviceId(deviceId);cmd.setCommandType(r.getString(2));cmd.setPayloadJson(r.getString(3));return cmd;}}
+        }
+    }
+    public boolean complete(int id,int device,String status)throws Exception{
+        try(Connection c=DBContext.getConnection();PreparedStatement p=c.prepareStatement("UPDATE ControlCommand SET status=?,ack_at=SYSDATETIME() WHERE command_id=? AND device_id=? AND status='PENDING' AND dispatched_at IS NOT NULL AND expires_at>=SYSDATETIME()")){p.setString(1,status);p.setInt(2,id);p.setInt(3,device);return p.executeUpdate()>0;}
     }
 }

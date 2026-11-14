@@ -12,7 +12,7 @@ public class ControlCommand {
     private Timestamp expiresAt;
     private Timestamp ackAt;
     
-    // Thuộc tính phụ trợ hiển thị
+    // Auxiliary display properties
     private String username;
 
     public ControlCommand() {}
@@ -44,10 +44,15 @@ public class ControlCommand {
     public Timestamp getAckAt() { return ackAt; }
     public void setAckAt(Timestamp ackAt) { this.ackAt = ackAt; }
 
+    private String deviceName;
+
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
-    public void setDeviceName(String string) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+    public String getDeviceName() { return deviceName; }
+    public void setDeviceName(String deviceName) { this.deviceName = deviceName; }
+
+    public Timestamp getRequestedAt() { return createdAt; }
+    public String getRequestedMode() { return "MANUAL"; }
+    public String getRequestedBy() { return username != null ? username : "Operator"; }
 }

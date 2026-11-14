@@ -127,6 +127,10 @@ public class DeviceDAO {
     }
 
     public MistingSetting getSetting(int deviceId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        try {
+            return new MistingSettingDAO().getSettingByDeviceId(deviceId);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
