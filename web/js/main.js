@@ -1749,87 +1749,106 @@ function parseIncomingHardwarePacket(raw) {
     }
 
     if (sm != null && !isNaN(sm)) {
-      if (data.lock_reason) {
-        AppState.telemetry.lockReason = data.lock_reason;
-      }
-
       applyTelemetryUpdate(sm, tk, rn, pmp);
       syncTelemetryToBackend(sm, tk, rn, pmp);
       broadcastIotEvent('TELEMETRY', { sm, tk, rn, pmp });
     }
-  } else if (raw.startsWith('{') && raw.endsWith('}')) {
-    try {
-      const data = JSON.parse(raw);
-      let sm = null;
-      if (data.soil !== undefined && data.soil !== null) sm = parseFloat(data.soil);
-      else if (data.humidity !== undefined && data.humidity !== null) sm = parseFloat(data.humidity); // Legacy SOIL alias only; never air RH.
-      else if (data.sm !== undefined && data.sm !== null) sm = parseFloat(data.sm);
-      if (sm == null || isNaN(sm)) return;
+  } else {
+    const jsonStart = raw.indexOf('{');
+    const jsonEnd = raw.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd > jsonStart) {
+      try {
+        const jsonStr = raw.substring(jsonStart, jsonEnd + 1);
+        const data = JSON.parse(jsonStr);
 
-      let tk = AppState.telemetry.tankLevel;
-      if (data.water !== undefined && data.water !== null) tk = parseFloat(data.water);
-      else if (data.tk !== undefined && data.tk !== null) tk = parseFloat(data.tk);
-      // water_ok is only a safety flag; it cannot represent an actual reservoir percentage.
-      if (tk == null || !Number.isFinite(tk)) return;
-
-      const rn = data.is_raining !== undefined ? Boolean(data.is_raining) : (data.rain !== undefined ? Boolean(data.rain) : (data.rn !== undefined ? Boolean(data.rn) : false));
-      const pmp = data.pump_on !== undefined ? Boolean(data.pump_on) : (data.pump !== undefined ? Boolean(data.pump) : (data.pmp !== undefined ? Boolean(data.pmp) : false));
-
-      if (data.dht_ok === 0 || data.dht_ok === false || data.air_temp === null) {
-        AppState.telemetry.airTemperature = null;
-        AppState.telemetry.temperature = null;
-        AppState.telemetry.airHumidity = null;
-      } else if (data.air_temp !== undefined && data.air_temp !== null && !isNaN(data.air_temp)) {
-        const t = parseFloat(data.air_temp);
-        AppState.telemetry.airTemperature = t;
-        AppState.telemetry.temperature = t;
-      } else if (data.temperature !== undefined && data.temperature !== null && !isNaN(data.temperature)) {
-        const t = parseFloat(data.temperature);
-        AppState.telemetry.airTemperature = t;
-        AppState.telemetry.temperature = t;
-      } else if (data.temp !== undefined && data.temp !== null && !isNaN(data.temp)) {
-        const t = parseFloat(data.temp);
-        AppState.telemetry.airTemperature = t;
-        AppState.telemetry.temperature = t;
-      }
-
-      if (data.dht_ok === 0 || data.dht_ok === false || data.air_hum === null) {
-        AppState.telemetry.airHumidity = null;
-      } else if (data.air_hum !== undefined && data.air_hum !== null && Number.isFinite(Number(data.air_hum))) {
-        AppState.telemetry.airHumidity = Number(data.air_hum);
-      }
-
-      if (Number.isFinite(Number(data.hum_on)) && Number.isFinite(Number(data.hum_off))) {
-        AppState.firmwareBounds = { on: Number(data.hum_on), off: Number(data.hum_off) };
-        const humOnInput = document.getElementById('setting-hum-on');
-        const humOffInput = document.getElementById('setting-hum-off');
-        // Editable thresholds represent saved/requested values, not a constantly rewritten telemetry field.
-        
-        const thresholdText = `Air RH: Start < ${AppState.firmwareBounds.on}% / Stop >= ${AppState.firmwareBounds.off}%`;
-        const boundEl = document.getElementById('dash-card-thresholds');
-        if (boundEl) boundEl.textContent = thresholdText;
-      }
-
-      if (data.mode && data.mode !== AppState.systemMode) {
-        AppState.systemMode = data.mode;
-        const modeBadge = document.getElementById('dash-card-mode-badge');
-        if (modeBadge) {
-          modeBadge.textContent = data.mode;
-          modeBadge.className = `badge-pill ${data.mode === 'AUTO' ? 'badge-emerald' : 'badge-amber'}`;
+        // 1. Soil Moisture (% or null if probe disconnected/floating)
+        let sm = null;
+        if (data.soil !== undefined && data.soil !== null) {
+          sm = parseFloat(data.soil);
+        } else if (data.humidity !== undefined && data.humidity !== null) {
+          sm = parseFloat(data.humidity);
+        } else if (data.sm !== undefined && data.sm !== null) {
+          sm = parseFloat(data.sm);
         }
-        const miniLabel = document.getElementById('mini-mode-status-label');
-        if (miniLabel) miniLabel.textContent = data.mode;
-      }
 
-      if (data.lock_reason) {
-        AppState.telemetry.lockReason = data.lock_reason;
-      }
+        // 2. Water Reservoir (% or null)
+        let tk = null;
+        if (data.water !== undefined && data.water !== null) {
+          tk = parseFloat(data.water);
+        } else if (data.tk !== undefined && data.tk !== null) {
+          tk = parseFloat(data.tk);
+        }
 
-      applyTelemetryUpdate(sm, tk, rn, pmp);
-      syncTelemetryToBackend(sm, tk, rn, pmp);
-      broadcastIotEvent('TELEMETRY', { sm, tk, rn, pmp });
-    } catch (e) {
-      console.warn('Failed to parse hardware JSON packet:', raw, e);
+        // 3. Actuator Relay / Mist Pump State
+        const pmp = (data.pump_on !== undefined) ? Boolean(Number(data.pump_on))
+                  : ((data.pump !== undefined) ? Boolean(Number(data.pump))
+                  : ((data.pmp !== undefined) ? Boolean(Number(data.pmp)) : false));
+
+        // 4. Precipitation / Rain State
+        const rn = data.is_raining !== undefined ? Boolean(data.is_raining)
+                 : (data.rain !== undefined ? Boolean(data.rain)
+                 : (data.rn !== undefined ? Boolean(data.rn) : false));
+
+        // 5. Chamber Temperature (DHT11)
+        if (data.dht_ok === 0 || data.dht_ok === false || data.air_temp === null) {
+          AppState.telemetry.airTemperature = null;
+          AppState.telemetry.temperature = null;
+        } else if (data.air_temp !== undefined && data.air_temp !== null && !isNaN(data.air_temp)) {
+          const t = parseFloat(data.air_temp);
+          AppState.telemetry.airTemperature = t;
+          AppState.telemetry.temperature = t;
+        } else if (data.temperature !== undefined && data.temperature !== null && !isNaN(data.temperature)) {
+          const t = parseFloat(data.temperature);
+          AppState.telemetry.airTemperature = t;
+          AppState.telemetry.temperature = t;
+        } else if (data.temp !== undefined && data.temp !== null && !isNaN(data.temp)) {
+          const t = parseFloat(data.temp);
+          AppState.telemetry.airTemperature = t;
+          AppState.telemetry.temperature = t;
+        }
+
+        // 6. Chamber Relative Humidity (DHT11)
+        if (data.dht_ok === 0 || data.dht_ok === false || data.air_hum === null) {
+          AppState.telemetry.airHumidity = null;
+        } else if (data.air_hum !== undefined && data.air_hum !== null && Number.isFinite(Number(data.air_hum))) {
+          AppState.telemetry.airHumidity = Number(data.air_hum);
+        }
+
+        // 7. Dynamic Firmware Thresholds
+        if (Number.isFinite(Number(data.hum_on)) && Number.isFinite(Number(data.hum_off))) {
+          AppState.firmwareBounds = { on: Number(data.hum_on), off: Number(data.hum_off) };
+          const thresholdText = `Air RH: Start < ${AppState.firmwareBounds.on}% / Stop >= ${AppState.firmwareBounds.off}%`;
+          const boundEl = document.getElementById('dash-card-thresholds');
+          if (boundEl) boundEl.textContent = thresholdText;
+        }
+
+        // 8. SCADA Mode Alignment
+        if (data.mode) {
+          const cleanMode = data.mode.toUpperCase();
+          if (cleanMode !== AppState.systemMode) {
+            AppState.systemMode = cleanMode;
+            const modeBadge = document.getElementById('dash-card-mode-badge');
+            if (modeBadge) {
+              modeBadge.textContent = cleanMode;
+              modeBadge.className = `badge-pill ${cleanMode === 'AUTO' ? 'badge-emerald' : 'badge-amber'}`;
+            }
+            const miniLabel = document.getElementById('mini-mode-status-label');
+            if (miniLabel) miniLabel.textContent = cleanMode;
+          }
+        }
+
+        // 9. Hardware Lock Reason
+        if (data.lock_reason) {
+          AppState.telemetry.lockReason = data.lock_reason;
+        }
+
+        // 10. Update Dashboard and Backend Stream
+        applyTelemetryUpdate(sm, tk, rn, pmp);
+        syncTelemetryToBackend(sm, tk, rn, pmp);
+        broadcastIotEvent('TELEMETRY', { sm, tk, rn, pmp });
+      } catch (e) {
+        console.warn('Failed to parse hardware JSON packet:', raw, e);
+      }
     }
   }
 }
@@ -2076,15 +2095,14 @@ function updatePumpTileBar(isOn, isConnected) {
 }
 
 function applyTelemetryUpdate(sm, tk, rn, pmp) {
-  if (sm == null || isNaN(sm)) return;
   const hexClusterEl = document.getElementById('organic-hex-cluster');
   if (hexClusterEl) hexClusterEl.classList.remove('standby');
-  if (tk == null || !Number.isFinite(Number(tk))) return;
-  sm = Math.min(100, Math.max(0, Number(sm)));
-  tk = Math.min(100, Math.max(0, Number(tk)));
 
-  AppState.telemetry.soilMoisture = sm;
-  AppState.telemetry.tankLevel = tk;
+  const validSm = (sm != null && !isNaN(sm)) ? Math.min(100, Math.max(0, Number(sm))) : null;
+  const validTk = (tk != null && Number.isFinite(Number(tk))) ? Math.min(100, Math.max(0, Number(tk))) : null;
+
+  AppState.telemetry.soilMoisture = validSm;
+  AppState.telemetry.tankLevel = validTk;
   AppState.telemetry.isRaining = !!rn;
   AppState.telemetry.lastRxTime = Date.now();
   if (pmp !== undefined) AppState.isPumpActive = !!pmp;
@@ -2092,8 +2110,8 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
 
   // Propagate to 3D Digital Twin simulation
   if (window.Garden3D) {
-    if (typeof window.Garden3D.setSoilMoisture === 'function') window.Garden3D.setSoilMoisture(sm);
-    if (typeof window.Garden3D.setWaterLevel === 'function') window.Garden3D.setWaterLevel(tk);
+    if (typeof window.Garden3D.setSoilMoisture === 'function') window.Garden3D.setSoilMoisture(validSm !== null ? validSm : 0);
+    if (typeof window.Garden3D.setWaterLevel === 'function') window.Garden3D.setWaterLevel(validTk !== null ? validTk : 0);
     if (typeof window.Garden3D.setRainState === 'function') window.Garden3D.setRainState(!!rn);
     if (pmp !== undefined && typeof window.Garden3D.triggerSpray === 'function') window.Garden3D.triggerSpray(!!pmp);
     // Live Holo Vitals Call
@@ -2102,14 +2120,13 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
     const validClimate = Number.isFinite(curT) && Number.isFinite(curH);
     const es = validClimate ? 0.61078 * Math.exp((17.27 * curT) / (curT + 237.3)) : null;
     const curVpd = validClimate ? Math.max(0, es * (1 - curH / 100)) : null;
-    updateHoloVitals(sm, tk, curT, curVpd);
-
+    updateHoloVitals(validSm, validTk, curT, curVpd);
   }
 
   // Safety Lockout Interlocks: Low water (<= 20%), cold temp (< 18C), saturated soil (> 65%), or rain active
   if (AppState.isPumpActive) {
     const curT = AppState.telemetry.airTemperature;
-    if (tk < 20.0) {
+    if (validTk !== null && validTk < 20.0) {
       if (typeof stopQuickSpray === 'function') stopQuickSpray();
       handleStopPump('SAFETY_LOW_WATER_LOCKOUT');
       showToast('Safety Lockout: Reservoir level < 20%, mist halted', 'crimson');
@@ -2124,7 +2141,7 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
       handleStopPump('SAFETY_COLD_TEMP_LOCKOUT');
       showToast('Thermal Cutoff: Temp < 18.0°C (Cold Shock Protection), mist halted', 'crimson');
       triggerBellNotification('Thermal Lockout: Temp < 18°C');
-    } else if (sm > 65.0) {
+    } else if (validSm !== null && validSm > 65.0) {
       if (typeof stopQuickSpray === 'function') stopQuickSpray();
       handleStopPump('SAFETY_WET_SOIL_LOCKOUT');
       showToast('Hydration Cutoff: Soil moisture > 65% (Root Rot Protection), mist halted', 'crimson');
@@ -2146,8 +2163,8 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
   if (typeof activeMorphSensor !== 'undefined' && activeMorphSensor) {
     const detailVal = document.getElementById('detail-card-val');
     if (detailVal) {
-      if (activeMorphSensor === 'soil') detailVal.textContent = sm.toFixed(1) + '%';
-      else if (activeMorphSensor === 'water') detailVal.textContent = Math.round(tk) + '%';
+      if (activeMorphSensor === 'soil') detailVal.textContent = validSm !== null ? validSm.toFixed(1) + '%' : '--';
+      else if (activeMorphSensor === 'water') detailVal.textContent = validTk !== null ? Math.round(validTk) + '%' : '--';
       else if (activeMorphSensor === 'humidity') detailVal.textContent = Number.isFinite(AppState.telemetry.airHumidity) ? AppState.telemetry.airHumidity.toFixed(1) + '%' : '--';
       else if (activeMorphSensor === 'rain') detailVal.textContent = rn ? 'RAIN' : 'DRY';
       else if (activeMorphSensor === 'relay') detailVal.textContent = pmp ? 'MISTING' : 'IDLE';
@@ -2162,11 +2179,35 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
   const soilBar = document.getElementById('pod-soil-bar');
   const podSoilDot = document.getElementById('pod-soil-dot');
   const podSoilGauge = document.getElementById('pod-soil-gauge');
-  if (soilVal) soilVal.textContent = sm.toFixed(1);
-  if (soilBar) soilBar.style.width = `${Math.min(100, Math.max(0, sm))}%`;
-  if (podSoilGauge) {
-    const sPct = Math.min(100, Math.max(0, sm));
-    podSoilGauge.style.strokeDashoffset = String(140 - (sPct / 100) * 140);
+  if (validSm !== null) {
+    if (soilVal) soilVal.textContent = validSm.toFixed(1);
+    if (soilBar) {
+      soilBar.style.width = `${validSm}%`;
+    }
+    if (podSoilGauge) {
+      podSoilGauge.style.strokeDashoffset = String(140 - (validSm / 100) * 140);
+    }
+    const activePlant = AppState.plants.find(p => p.id === AppState.activePlantId) || {};
+    const minThreshold = activePlant.min != null ? activePlant.min : 50.0;
+    let soilColor = '#10B981';
+    let soilDotClass = 'micro-status-indicator ' + (AppState.hardwareConnected ? 'live' : 'offline');
+    if (validSm < 25) {
+      soilColor = '#A91B0D';
+      soilDotClass = 'micro-status-indicator offline';
+    } else if (validSm < minThreshold) {
+      soilColor = '#FFDF80';
+      soilDotClass = 'micro-status-indicator warning';
+    }
+    if (soilBar) soilBar.style.backgroundColor = soilColor;
+    if (soilVal) soilVal.style.color = (validSm < 25) ? '#A91B0D' : ((validSm < minThreshold) ? '#FFDF80' : 'var(--text-main)');
+    if (podSoilDot) podSoilDot.className = soilDotClass;
+  } else {
+    if (soilVal) {
+      soilVal.textContent = '--';
+      soilVal.style.color = 'var(--text-muted)';
+    }
+    if (soilBar) soilBar.style.width = '0%';
+    if (podSoilDot) podSoilDot.className = 'micro-status-indicator offline';
   }
 
   const tankVal = document.getElementById('stat-tank-val');
@@ -2174,12 +2215,35 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
   const tankBar = document.getElementById('pod-tank-bar');
   const podTankDot = document.getElementById('pod-tank-dot');
   const podTankGauge = document.getElementById('pod-tank-gauge');
-  if (tankVal) tankVal.textContent = Math.round(tk);
-  if (waterTube) waterTube.style.height = `${Math.round(tk)}%`;
-  if (tankBar) tankBar.style.width = `${Math.min(100, Math.max(0, tk))}%`;
-  if (podTankGauge) {
-    const tPct = Math.min(100, Math.max(0, tk));
-    podTankGauge.style.strokeDashoffset = String(140 - (tPct / 100) * 140);
+  if (validTk !== null) {
+    if (tankVal) tankVal.textContent = Math.round(validTk);
+    if (waterTube) waterTube.style.height = `${Math.round(validTk)}%`;
+    if (tankBar) {
+      tankBar.style.width = `${validTk}%`;
+    }
+    if (podTankGauge) {
+      podTankGauge.style.strokeDashoffset = String(140 - (validTk / 100) * 140);
+    }
+    let tankColor = '#0284C7';
+    let tankDotClass = 'micro-status-indicator ' + (AppState.hardwareConnected ? 'live' : 'offline');
+    if (validTk <= 20) {
+      tankColor = '#A91B0D';
+      tankDotClass = 'micro-status-indicator offline';
+    } else if (validTk <= 40) {
+      tankColor = '#FFDF80';
+      tankDotClass = 'micro-status-indicator warning';
+    }
+    if (tankBar) tankBar.style.backgroundColor = tankColor;
+    if (tankVal) tankVal.style.color = (validTk <= 20) ? '#A91B0D' : ((validTk <= 40) ? '#FFDF80' : 'var(--text-main)');
+    if (podTankDot) podTankDot.className = tankDotClass;
+  } else {
+    if (tankVal) {
+      tankVal.textContent = '--';
+      tankVal.style.color = 'var(--text-muted)';
+    }
+    if (waterTube) waterTube.style.height = '0%';
+    if (tankBar) tankBar.style.width = '0%';
+    if (podTankDot) podTankDot.className = 'micro-status-indicator offline';
   }
 
   const airHumEl = document.getElementById('stat-air-hum');
@@ -2191,35 +2255,7 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
   const airHumBar = document.getElementById('pod-air-hum-bar');
   if (airHumBar) airHumBar.style.width = Number.isFinite(curHum) ? `${Math.max(0, Math.min(100, curHum))}%` : '0%';
 
-  let tankColor = '#0284C7';
-  let tankDotClass = 'micro-status-indicator ' + (AppState.hardwareConnected ? 'live' : 'offline');
-  if (tk <= 20) {
-    tankColor = '#A91B0D';
-    tankDotClass = 'micro-status-indicator offline';
-  } else if (tk <= 40) {
-    tankColor = '#FFDF80';
-    tankDotClass = 'micro-status-indicator warning';
-  }
-  if (tankBar) tankBar.style.backgroundColor = tankColor;
-  if (tankVal) tankVal.style.color = (tk <= 20) ? '#A91B0D' : ((tk <= 40) ? '#FFDF80' : 'var(--text-main)');
-  if (podTankDot) podTankDot.className = tankDotClass;
-
-  const activePlant = AppState.plants.find(p => p.id === AppState.activePlantId) || {};
-  const minThreshold = activePlant.min != null ? activePlant.min : 50.0;
-  let soilColor = '#10B981';
-  let soilDotClass = 'micro-status-indicator ' + (AppState.hardwareConnected ? 'live' : 'offline');
-  if (sm < 25) {
-    soilColor = '#A91B0D';
-    soilDotClass = 'micro-status-indicator offline';
-  } else if (sm < minThreshold) {
-    soilColor = '#FFDF80';
-    soilDotClass = 'micro-status-indicator warning';
-  }
-  if (soilBar) soilBar.style.backgroundColor = soilColor;
-  if (soilVal) soilVal.style.color = (sm < 25) ? '#A91B0D' : ((sm < minThreshold) ? '#FFDF80' : 'var(--text-main)');
-  if (podSoilDot) podSoilDot.className = soilDotClass;
-
-  const isCriticalDryManual = (AppState.systemMode === 'MANUAL' && sm < 20 && AppState.hardwareConnected);
+  const isCriticalDryManual = (AppState.systemMode === 'MANUAL' && validSm !== null && validSm < 20 && AppState.hardwareConnected);
   const appContainer = document.getElementById('app-container');
   if (appContainer) {
     appContainer.classList.toggle('critical-dry-ambient-alert', !!isCriticalDryManual);
