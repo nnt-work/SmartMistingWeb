@@ -19,9 +19,9 @@
 
 <br/>
 
-<img src="docs/img/prototype-overview.jpg" alt="Smart Misting Physical Terrarium Prototype" width="850" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
+<img src="docs/img/dashboard-ui.png" alt="Smart Misting Web SCADA Dashboard" width="950" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
 
-*Figure 1: Fully instrumented physical terrarium prototype for Ludisia discolor cultivation with acrylic chamber, ultrasonic atomization nozzle, Arduino Uno R3 controller, LCD telemetry screen, and sensor array.*
+*Figure 1: SmartMisting Web SCADA Dashboard with an interactive 3D digital twin, real-time sensor telemetry, automated/manual misting controls, and administrative management panel.*
 
 </div>
 
@@ -29,13 +29,13 @@
 
 ## 📌 Executive Summary
 
-Controlled-environment agriculture (CEA) for high-value botanical specimens (*Ludisia discolor* / Jewel Orchid) demands tight relative humidity regulation without over-saturating soil substrates. Typical cloud-dependent IoT systems suffer from high command latency and catastrophic failure modes during network disruptions. 
+Compact terrariums and microclimate enclosures require reliable air-humidity regulation without over-saturating substrate root zones. Traditional IoT irrigation architectures often rely on external native gateways or cloud-tethered relays, introducing actuation latency and risking catastrophic over-watering or transducer burnout during network disconnections.
 
-**SmartMisting** introduces a browser-hosted SCADA architecture that resolves these challenges through a strict separation of concerns:
-- **Zero Native Middleware**: The browser communicates directly with the physical microcontroller via the **W3C Web Serial API**, removing external background bridge processes.
-- **Concurrency Coordination**: The **W3C Web Locks API** coordinates exclusive COM port access across multi-tab browser sessions on the same origin.
-- **Asymmetric Command Verification**: A web command is never treated as executed upon serial transmission; physical confirmation requires subsequent Arduino JSON telemetry frames.
-- **Autonomous Firmware Safety Envelope**: The microcontroller independently executes safety cutoffs (low water cutoff $<20\%$, soil saturation $>65\%$, ambient temperature limits $18.0^\circ\text{C} - 38.0^\circ\text{C}$, and sensor disconnect guards) in $\le 500\text{ ms}$, operating autonomously even if the browser host crashes or disconnects.
+**SmartMisting** introduces a browser-native Supervisory Control and Data Acquisition (SCADA) system integrating an Arduino Uno R3 edge controller with an enterprise Java Servlet/JSP and Microsoft SQL Server backend through direct USB serial communication:
+- **Zero Native Middleware**: The browser directly communicates with the physical microcontroller via the **W3C Web Serial API** at 9600 baud, eliminating third-party background daemon processes.
+- **Exclusive Multi-Tab Concurrency**: The **W3C Web Locks API** enforces single-tab USB port ownership across multiple browser tabs on the same origin, preventing serial port collision while allowing concurrent supervisory client sessions.
+- **Telemetry-Verified Physical Acknowledgment**: A web command is never treated as executed upon serial transmission; actuation is acknowledged only after subsequent Arduino JSON telemetry frames confirm the actual relay state.
+- **Autonomous Firmware-First Safety Interlocks**: The microcontroller independently executes safety checks and emergency cutoffs (water reservoir $<20\%$, soil moisture $>65\%$, ambient temperature $<18.0^\circ\text{C}$ or $>38.0^\circ\text{C}$, and analog open-circuit rail detection $\le 15$ or $\ge 1018$) in $\le 500\text{ ms}$, ensuring complete fail-safe isolation even if the host computer or browser disconnects.
 
 ---
 
@@ -50,6 +50,12 @@ The system comprises four decoupled functional layers:
 2. **Host Browser Serial Bridge Layer**: A Chromium-based supervisory client using `navigator.serial` at 9600 baud (8N1) and `navigator.locks` to maintain telemetry streaming at 1 Hz and relay serialized command packets.
 3. **Enterprise Web Application & Persistence Layer**: A Java Servlet/JSP container (Apache Tomcat 9) backed by Microsoft SQL Server via pure JDBC (`PreparedStatement`). Enforces four-tier Role-Based Access Control (RBAC: Admin, Staff, Expert, Guest) and hashes passwords using PBKDF2WithHmacSHA256 (120,000 iterations).
 4. **Outbound Incident Notification & Watchdog Layer**: Outbound webhooks dispatch formatted Industrial IoT embeds to Discord with 3-consecutive-sample filtering and a 15-message/minute rate limiter, while external heartbeats monitor host uptime via Healthchecks.io.
+
+<div align="center">
+<img src="docs/img/telemetry-deck.png" alt="Bio-Telemetry Deck and Real-Time Spline Analytics" width="850" style="border-radius: 8px; margin-top: 10px;" />
+<br/>
+<em>Figure 3: Browser-Hosted Bio-Telemetry Deck displaying live spline charting and persistent execution audit logs.</em>
+</div>
 
 ---
 
@@ -98,9 +104,11 @@ The prototype was rigorously evaluated on Windows 11 with Apache Tomcat 9.0, Mic
 
 ---
 
-## 🔌 Hardware Schematics & Pinout Mapping
+## 🔌 Hardware Instrumentation & Pinout Mapping
 
 <div align="center">
+<img src="docs/img/hardware-components.png" alt="Instrumented Hardware Components" width="850" style="border-radius: 8px; margin-bottom: 12px;" />
+<br/>
 <img src="docs/img/wiring.png" alt="Arduino Uno R3 Pinout Wiring Schematic" width="800" style="border-radius: 8px;" />
 </div>
 
@@ -195,10 +203,12 @@ g++ -std=c++11 -I tests/firmware/stubs tests/firmware/firmware_test.cpp -o tests
 PRJ301_SmartMisting/
 ├── SmartMisting_Report.pdf                     # Technical Paper (Full Manuscript PDF)
 ├── VIDEO_DEMO.mp4                              # Prototype Demonstration Video
-├── docs/                                       # High-resolution architectural diagrams
+├── docs/                                       # High-resolution system diagrams & UI captures
 │   └── img/
+│       ├── dashboard-ui.png                    # 3D Digital Twin & Web SCADA Dashboard UI
+│       ├── telemetry-deck.png                  # Bio-Telemetry Deck live charts & log analytics
+│       ├── hardware-components.png             # Instrumented sensor and actuator components
 │       ├── architecture.jpg                    # Four-tier system architecture
-│       ├── prototype-overview.jpg              # Physical terrarium prototype photograph
 │       ├── flowchart.png                       # Control flow and hysteresis decision tree
 │       └── wiring.png                          # Arduino Uno pinout and electrical wiring
 ├── arduino/
