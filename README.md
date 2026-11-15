@@ -21,8 +21,6 @@
 
 <img src="docs/img/dashboard-ui.png" alt="Smart Misting Web SCADA Dashboard" width="950" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
 
-*Figure 1: SmartMisting Web SCADA Dashboard with an interactive 3D digital twin, real-time sensor telemetry, automated/manual misting controls, and administrative management panel.*
-
 </div>
 
 ---
@@ -41,29 +39,15 @@ Compact terrariums and microclimate enclosures require reliable air-humidity reg
 
 ## 🏗️ System Architecture
 
-<div align="center">
-<img src="docs/img/architecture.jpg" alt="Four-tier SCADA Architecture" width="850" style="border-radius: 8px;" />
-</div>
-
 The system comprises four decoupled functional layers:
 1. **Physical Sensing & Actuation Layer**: Arduino Uno R3 sampling calibrated analog soil probes (A0), reservoir resistive liquid sensors (A2), and DHT11 digital environmental probes (A1). Actuation is driven by an active-LOW 5V relay module (D8) connected to an ultrasonic misting transducer.
 2. **Host Browser Serial Bridge Layer**: A Chromium-based supervisory client using `navigator.serial` at 9600 baud (8N1) and `navigator.locks` to maintain telemetry streaming at 1 Hz and relay serialized command packets.
 3. **Enterprise Web Application & Persistence Layer**: A Java Servlet/JSP container (Apache Tomcat 9) backed by Microsoft SQL Server via pure JDBC (`PreparedStatement`). Enforces four-tier Role-Based Access Control (RBAC: Admin, Staff, Expert, Guest) and hashes passwords using PBKDF2WithHmacSHA256 (120,000 iterations).
 4. **Outbound Incident Notification & Watchdog Layer**: Outbound webhooks dispatch formatted Industrial IoT embeds to Discord with 3-consecutive-sample filtering and a 15-message/minute rate limiter, while external heartbeats monitor host uptime via Healthchecks.io.
 
-<div align="center">
-<img src="docs/img/telemetry-deck.png" alt="Bio-Telemetry Deck and Real-Time Spline Analytics" width="850" style="border-radius: 8px; margin-top: 10px;" />
-<br/>
-<em>Figure 3: Browser-Hosted Bio-Telemetry Deck displaying live spline charting and persistent execution audit logs.</em>
-</div>
-
 ---
 
 ## ⚙️ Control Flow & Hysteresis Logic
-
-<div align="center">
-<img src="docs/img/flowchart.png" alt="Control Flow and Hysteresis Architecture" width="800" style="border-radius: 8px;" />
-</div>
 
 ### Closed-Loop Automation (AUTO Mode)
 - **Activation Condition**: Relative Humidity ($\text{Air RH}$) falls below **$60.0\%$**. Pump turns `ON` continuously.
@@ -105,12 +89,6 @@ The prototype was rigorously evaluated on Windows 11 with Apache Tomcat 9.0, Mic
 ---
 
 ## 🔌 Hardware Instrumentation & Pinout Mapping
-
-<div align="center">
-<img src="docs/img/hardware-components.png" alt="Instrumented Hardware Components" width="850" style="border-radius: 8px; margin-bottom: 12px;" />
-<br/>
-<img src="docs/img/wiring.png" alt="Arduino Uno R3 Pinout Wiring Schematic" width="800" style="border-radius: 8px;" />
-</div>
 
 | Pin Identifier | Component | Interface Type | Electrical Calibration & Thresholds |
 |:---:|:---:|:---:|---|
@@ -203,14 +181,9 @@ g++ -std=c++11 -I tests/firmware/stubs tests/firmware/firmware_test.cpp -o tests
 PRJ301_SmartMisting/
 ├── SmartMisting_Report.pdf                     # Technical Paper (Full Manuscript PDF)
 ├── VIDEO_DEMO.mp4                              # Prototype Demonstration Video
-├── docs/                                       # High-resolution system diagrams & UI captures
+├── docs/                                       # High-resolution UI captures
 │   └── img/
-│       ├── dashboard-ui.png                    # 3D Digital Twin & Web SCADA Dashboard UI
-│       ├── telemetry-deck.png                  # Bio-Telemetry Deck live charts & log analytics
-│       ├── hardware-components.png             # Instrumented sensor and actuator components
-│       ├── architecture.jpg                    # Four-tier system architecture
-│       ├── flowchart.png                       # Control flow and hysteresis decision tree
-│       └── wiring.png                          # Arduino Uno pinout and electrical wiring
+│       └── dashboard-ui.png                    # Web SCADA Dashboard UI
 ├── arduino/
 │   └── SmartMisting_PRJ301/
 │       └── SmartMisting_PRJ301.ino             # Production Arduino firmware
@@ -251,8 +224,3 @@ PRJ301_SmartMisting/
 ## 📄 Reference & Documentation
 - **Technical Paper (Full Manuscript)**: [SmartMisting_Report.pdf](SmartMisting_Report.pdf)
 - **Live Video Demonstration**: [VIDEO_DEMO.mp4](VIDEO_DEMO.mp4)
-- **Primary References**:
-  - W3C, *"Web Locks API: W3C Candidate Recommendation Snapshot"*, 2024. [https://www.w3.org/TR/web-locks/](https://www.w3.org/TR/web-locks/)
-  - WICG, *"Web Serial API: Draft Community Group Report"*, 2024. [https://wicg.github.io/serial/](https://wicg.github.io/serial/)
-  - K. Moriarty et al., *"PKCS #5: Password-Based Cryptography Specification Version 2.1"*, RFC 8018, 2017.
-  - OWASP Foundation, *"Password Storage Cheat Sheet"*, 2024.
