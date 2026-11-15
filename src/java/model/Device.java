@@ -73,6 +73,6 @@ public class Device {
     public boolean isOnline() {
         if (lastSeen == null) return false;
         long diff = System.currentTimeMillis() - lastSeen.getTime();
-        return diff < (3 * 60 * 1000);
+        return diff < (3 * 60 * 1000); // 3 minutes threshold
     }
 }

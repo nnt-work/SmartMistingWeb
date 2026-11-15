@@ -42,7 +42,7 @@ public class Config {
                 System.err.println("[Config] Error reading config file: " + e.getMessage());
             }
         } else {
-
+            // Attempt classpath fallback
             try (InputStream in = Config.class.getResourceAsStream("/prj_sm_config.properties")) {
                 if (in != null) {
                     PROPS.load(in);
@@ -79,7 +79,7 @@ public class Config {
         }
 
         if ("discord.webhook.url".equals(key) || "discord.webhook".equals(key)) {
-            return (defaultVal != null && !defaultVal.trim().isEmpty()) ? defaultVal : "https://discord.com/api/webhooks/1563858029861150811/_sIvTXS95FMlMAGcay7oqMyvN2xVzKymOBHgJfppqiKprrFh6LBG42-QlabOvk2liv9q";
+            return (defaultVal != null && !defaultVal.trim().isEmpty()) ? defaultVal : "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN";
         }
         return defaultVal;
     }

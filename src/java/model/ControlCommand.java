@@ -11,7 +11,8 @@ public class ControlCommand {
     private Timestamp createdAt;
     private Timestamp expiresAt;
     private Timestamp ackAt;
-
+    
+    // Auxiliary display properties
     private String username;
 
     public ControlCommand() {}

@@ -1,7 +1,7 @@
 package util;
 import java.sql.*;
 import service.Config;
-
+/** SQL Server JDBC configuration. Explicit credentials; no password guessing. */
 public class DBContext {
  public static Connection getConnection() throws ClassNotFoundException, SQLException {
   Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");

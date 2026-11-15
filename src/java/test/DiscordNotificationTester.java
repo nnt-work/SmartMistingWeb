@@ -3,6 +3,10 @@ package test;
 import service.DiscordNotifier;
 import service.Notifier.Level;
 
+/**
+ * Diagnostic Test Runner: Emits each SCADA alert embed sequentially to the Discord webhook
+ * for end-to-end operational verification.
+ */
 public class DiscordNotificationTester {
 
     public static void main(String[] args) {
@@ -35,7 +39,7 @@ public class DiscordNotificationTester {
         System.out.println("-> Sending [" + level + "] " + code + "...");
         notifier.send(code, level, msg);
         try {
-            Thread.sleep(1500L);
+            Thread.sleep(1500L); // 1.5s delay to adhere to Discord webhook rate limits
         } catch (InterruptedException ignored) {}
     }
 }

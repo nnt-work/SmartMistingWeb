@@ -99,7 +99,7 @@ public class ProfileServlet extends HttpServlet {
                 return;
 
             } else if ("toggle_permission".equalsIgnoreCase(action)) {
-
+                // Admin permission toggle
                 if (!user.isAdmin()) {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "Only administrators can modify RBAC permissions.");
                     return;

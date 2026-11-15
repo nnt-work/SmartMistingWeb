@@ -1,5 +1,7 @@
 let chartCanvas = null, chartCtx = null, chartHoverIndex = -1;
-
+/* =====================================================================================================
+   SECTION 1: GLOBAL SYSTEM STATE (Hydrated with Server Data or Realistic Seeds)
+   ===================================================================================================== */
 const AppState = {
   theme: localStorage.getItem('console_theme') || 'dark',
   currentUserId: 1,
@@ -57,6 +59,7 @@ function formatRelativeTime(offsetMinutes) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
+// Serial & Hardware Port Handles
 let serialPort = null;
 let serialReader = null;
 let serialKeepReading = true;
@@ -66,6 +69,7 @@ let lastDbSyncTime = 0;
 let simulatedHardwareInterval = null;
 let totalPacketsExchanged = 0;
 
+// Cross-Tab Real-time Synchronizer (Native BroadcastChannel)
 const iotBus = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('smart_misting_iot_bus') : null;
 
 function broadcastIotEvent(type, payload) {
@@ -122,6 +126,9 @@ if (iotBus) {
   };
 }
 
+/* =====================================================================================================
+   SECTION 2: INITIALIZATION & SERVER HYDRATION
+   ===================================================================================================== */
 function initApp() {
   try {
     hydrateServerData();
@@ -150,6 +157,7 @@ function initApp() {
     console.warn('initApp non-fatal warning:', err);
   }
 
+  // Route according to active view pane or URL if panes exist on page
   const activePane = document.querySelector('.view-pane.active');
   if (activePane) {
     navigateTo(activePane.id, false);
@@ -171,6 +179,8 @@ function initApp() {
   }
 }
 
+// [Deferred boot] initApp is registered at end of script
+
 function hydrateServerData() {
   if (window.INITIAL_SERVER_DATA) {
     const s = window.INITIAL_SERVER_DATA;
@@ -178,7 +188,7 @@ function hydrateServerData() {
     if (s.currentUserRole) AppState.currentUserRole = s.currentUserRole;
     if (s.systemMode) AppState.systemMode = s.systemMode;
     if (s.plants && s.plants.length > 0) {
-
+      // Sanitize corrupted/truncated plant names like "mi" into "Ludisia discolor"
       AppState.plants = s.plants.map((p, idx) => {
         if (!p.name || p.name.trim().length <= 2 || p.name.trim().toLowerCase() === 'mi') {
           return Object.assign({}, p, {
@@ -207,6 +217,9 @@ function hydrateServerData() {
   }
 }
 
+/* =====================================================================================================
+   SECTION 3: 0ms INSTANT CLIENT-SIDE SPA ROUTING
+   ===================================================================================================== */
 function initNavigation() {
   window.addEventListener('popstate', (e) => {
     if (e.state && e.state.viewId) {
@@ -282,6 +295,9 @@ function navigateTo(viewId, updateHistory = true) {
   }
 }
 
+/* =====================================================================================================
+   SECTION 4: SIDEBAR COLLAPSE, FULLSCREEN & THEME HANDLERS
+   ===================================================================================================== */
 function toggleSidebar() {
   const container = document.getElementById('app-container');
   if (!container) return;
@@ -356,6 +372,9 @@ function updateThemeControls() {
   }
 }
 
+/* =====================================================================================================
+   SECTION 5: DATA RENDERING & BOTANICAL CALIBRATION
+   ===================================================================================================== */
 function renderAll() {
   renderActivePlant();
   renderPlantTable();
@@ -396,6 +415,7 @@ function renderActivePlant() {
   const legendBounds = document.getElementById('legend-target-bounds');
   if (legendBounds) legendBounds.textContent = `Target Bounds [${activePlant.min}% - ${activePlant.max}%]`;
 
+  // Sync Floating Action Capsule Plant Selector if present
   const capsuleSelector = document.getElementById('capsule-plant-selector');
   if (capsuleSelector && capsuleSelector.options) {
     Array.from(capsuleSelector.options).forEach(opt => {
@@ -482,10 +502,14 @@ function setActivePlantProfile(plantId) {
   renderPlantTable();
   renderPlantDropdowns();
 
+  // Sync to settings inputs
   const humOnInput = document.getElementById('setting-hum-on');
   const humOffInput = document.getElementById('setting-hum-off');
   if (humOnInput) humOnInput.value = plant.min;
   if (humOffInput) humOffInput.value = plant.max;
+
+  // Plant profile ranges describe soil moisture; never send them as DHT11 air RH limits.
+  // Firmware air RH limits are configured explicitly in the Thresholds panel.
 
   AppState.history.audit.unshift({
     time: formatNow(),
@@ -725,6 +749,9 @@ function submitCreatePlant() {
   }).catch(() => {});
 }
 
+/* =====================================================================================================
+   SECTION 6: USER MANAGEMENT RBAC CRUD (WITH STRICT SAFETY GUARDS)
+   ===================================================================================================== */
 function renderUserTable() {
   const tbody = document.getElementById('tbody-users');
   if (!tbody) return;
@@ -1011,6 +1038,9 @@ function deleteUser(id) {
   }).catch(() => {});
 }
 
+/* =====================================================================================================
+   SECTION 7: MISTING AUTOMATION SETTINGS CONTROLLER
+   ===================================================================================================== */
 function selectSettingMode(mode) {
   AppState.systemMode = mode;
 
@@ -1319,6 +1349,10 @@ function saveMistingSettings() {
   }).catch(() => {});
 }
 
+/* =====================================================================================================
+   SECTION 8: HARDWARE CONNECTION & WEBSERIAL / BLE IOT STREAM
+   ===================================================================================================== */
+
 function switchHwModalTab(tabType) {
   const isUsb = (tabType === 'USB');
   const portEl = document.getElementById('hw-connect-port');
@@ -1379,13 +1413,35 @@ function openConnectModal() {
 let pendingHandshakeResolve = null;
 
 function sendRawSerialCommand(cmdText) {
+  if (typeof Prj !== 'undefined' && Prj.writeQueue) {
+    Prj.writeQueue = Prj.writeQueue.then(async function() {
+      if (serialPort && serialPort.writable) {
+        try {
+          const writer = serialPort.writable.getWriter();
+          try {
+            await writer.write(new TextEncoder().encode(cmdText.trim() + '\n'));
+          } finally {
+            try { writer.releaseLock(); } catch (err) {}
+          }
+          if (typeof addSerialLog === 'function') addSerialLog('TX', cmdText.trim());
+          return true;
+        } catch (e) {
+          console.warn('sendRawSerialCommand write error:', e);
+          return false;
+        }
+      }
+      return false;
+    });
+    return Prj.writeQueue;
+  }
+
   if (serialPort && serialPort.writable) {
     try {
       const writer = serialPort.writable.getWriter();
       return writer.write(new TextEncoder().encode(cmdText.trim() + '\n'))
         .then(function() {
           writer.releaseLock();
-          addSerialLog('TX', cmdText.trim());
+          if (typeof addSerialLog === 'function') addSerialLog('TX', cmdText.trim());
           return true;
         })
         .catch(function(e) {
@@ -1400,6 +1456,7 @@ function sendRawSerialCommand(cmdText) {
   }
   return Promise.resolve(false);
 }
+window.sendRawSerialCommand = sendRawSerialCommand;
 
 function executeHardwareConnect(forcedMode) {
   const portEl = document.getElementById('hw-connect-port');
@@ -1441,6 +1498,7 @@ function executeHardwareConnect(forcedMode) {
       const info = (serialPort.getInfo && serialPort.getInfo()) || {};
       const hasUsbId = Boolean(info.usbVendorId || info.usbProductId);
 
+      // Strict Channel Guard: Reject if user selected Bluetooth but clicked USB device, or vice-versa
       if (isUsbOnly && !hasUsbId && info.bluetoothServiceClassId) {
         throw new Error('Channel Mismatch: Bluetooth device selected on USB tab. Please use Bluetooth tab.');
       }
@@ -1461,6 +1519,7 @@ function executeHardwareConnect(forcedMode) {
 
       startSerialReaderLoop();
 
+      // Continuous keep-alive & fast telemetry sync ping timer (every 2000ms like IOT_HN)
       if (serialPingTimer) clearInterval(serialPingTimer);
       serialPingTimer = setInterval(function() {
         if (AppState.hardwareConnected && serialPort) {
@@ -1470,12 +1529,12 @@ function executeHardwareConnect(forcedMode) {
 
       const handshakePromise = new Promise(function(resolve) {
         pendingHandshakeResolve = resolve;
-
+        // Pulse train to handle Arduino DTR reset and bootloader gracefully (150ms, 450ms, 1000ms, 1800ms)
         setTimeout(function() { sendRawSerialCommand('STATUS'); }, 150);
         setTimeout(function() { sendRawSerialCommand('STATUS'); }, 450);
         setTimeout(function() { sendRawSerialCommand('STATUS'); }, 1000);
         setTimeout(function() { sendRawSerialCommand('STATUS'); }, 1800);
-
+        // Automatically resolve after 2.0s if port is open - don't block user
         setTimeout(function() {
           if (pendingHandshakeResolve) {
             pendingHandshakeResolve = null;
@@ -1733,6 +1792,7 @@ function parseIncomingHardwarePacket(raw) {
         const jsonStr = raw.substring(jsonStart, jsonEnd + 1);
         const data = JSON.parse(jsonStr);
 
+        // 1. Soil Moisture (% or null if probe disconnected/floating)
         const isSoilValid = data.soil_ok !== 0 && data.soil_ok !== false && (
           (data.soil !== undefined && data.soil !== null && !isNaN(data.soil) && Number(data.soil) >= 0) ||
           (data.soil_moisture !== undefined && data.soil_moisture !== null && !isNaN(data.soil_moisture)) ||
@@ -1745,6 +1805,7 @@ function parseIncomingHardwarePacket(raw) {
           else if (data.humidity !== undefined && data.humidity !== null) sm = parseFloat(data.humidity);
         }
 
+        // 2. Water Reservoir (% or null, exactly matching IOT_HN)
         const isWaterValid = data.water_valid !== 0 && data.water_valid !== false && (
           (data.water !== undefined && data.water !== null && !isNaN(data.water) && Number(data.water) >= 0) ||
           (data.water_pct !== undefined && data.water_pct !== null && !isNaN(data.water_pct) && Number(data.water_pct) >= 0)
@@ -1760,16 +1821,19 @@ function parseIncomingHardwarePacket(raw) {
           tk = parseFloat(data.water_pct);
         }
 
+        // 3. Actuator Relay / Mist Pump State
         const pmp = (data.pump_on !== undefined) ? Boolean(Number(data.pump_on))
                   : ((data.pump !== undefined) ? Boolean(Number(data.pump))
                   : ((data.relay !== undefined) ? Boolean(Number(data.relay))
                   : ((data.relay_on !== undefined) ? Boolean(Number(data.relay_on))
                   : ((data.pmp !== undefined) ? Boolean(Number(data.pmp)) : false))));
 
+        // 4. Precipitation / Rain State
         const rn = data.is_raining !== undefined ? Boolean(data.is_raining)
                  : (data.rain !== undefined ? Boolean(data.rain)
                  : (data.rn !== undefined ? Boolean(data.rn) : false));
 
+        // 5. Chamber Temperature (DHT11)
         if (data.dht_ok === 0 || data.dht_ok === false || data.air_temp === null) {
           AppState.telemetry.airTemperature = null;
           AppState.telemetry.temperature = null;
@@ -1787,6 +1851,7 @@ function parseIncomingHardwarePacket(raw) {
           AppState.telemetry.temperature = t;
         }
 
+        // 6. Chamber Relative Humidity (DHT11)
         if (data.dht_ok === 0 || data.dht_ok === false || data.air_hum === null) {
           AppState.telemetry.airHumidity = null;
         } else if (data.air_hum !== undefined && data.air_hum !== null && Number.isFinite(Number(data.air_hum))) {
@@ -1795,6 +1860,7 @@ function parseIncomingHardwarePacket(raw) {
           AppState.telemetry.airHumidity = Number(data.air_humidity);
         }
 
+        // 7. Dynamic Firmware Thresholds
         if (Number.isFinite(Number(data.hum_on)) && Number.isFinite(Number(data.hum_off))) {
           AppState.firmwareBounds = { on: Number(data.hum_on), off: Number(data.hum_off) };
           const thresholdText = `Air RH: Start < ${AppState.firmwareBounds.on}% / Stop >= ${AppState.firmwareBounds.off}%`;
@@ -1802,6 +1868,7 @@ function parseIncomingHardwarePacket(raw) {
           if (boundEl) boundEl.textContent = thresholdText;
         }
 
+        // 8. SCADA Mode Alignment
         if (data.mode) {
           const cleanMode = data.mode.toUpperCase();
           if (cleanMode !== AppState.systemMode) {
@@ -1816,6 +1883,7 @@ function parseIncomingHardwarePacket(raw) {
           }
         }
 
+        // 9. Hardware Lock Reason
         if (typeof data.stop_reason === 'number') {
           switch (data.stop_reason) {
             case 0: AppState.telemetry.lockReason = 'NONE'; break;
@@ -1831,6 +1899,7 @@ function parseIncomingHardwarePacket(raw) {
           AppState.telemetry.lockReason = data.lock_reason;
         }
 
+        // 10. Update Dashboard and Backend Stream
         applyTelemetryUpdate(sm, tk, rn, pmp);
         syncTelemetryToBackend(sm, tk, rn, pmp);
         broadcastIotEvent('TELEMETRY', { sm, tk, rn, pmp });
@@ -1871,6 +1940,7 @@ function startSimulatedTelemetryStream() {
       currentSoil = Math.max(30.0, currentSoil - 0.1);
     }
 
+    // Biological microclimate calculation for Ludisia discolor
     if (AppState.isPumpActive) {
       AppState.telemetry.airHumidity = Math.min(88.0, (AppState.telemetry.airHumidity || 62.0) + 1.2);
     } else {
@@ -1905,6 +1975,10 @@ function startSimulatedTelemetryStream() {
   }, 1500);
 }
 
+
+// =========================================================================
+// HOLOGRAPHIC VITALS COCKPIT UPDATER (POINTS 2 & 7)
+// =========================================================================
 function updateHoloVitals(sm, tk, temp, vpd) {
   try {
     const soilVal = document.getElementById('holo-soil-val');
@@ -2000,6 +2074,7 @@ function resetTelemetryToStandby() {
   if (waterTube) waterTube.style.height = '0%';
   if (podTankDot) podTankDot.className = 'micro-status-indicator offline';
 
+  
   if (typeof updateHoloVitals === "function") updateHoloVitals(0, 0, null, null);
 
   const rainVal = document.getElementById('stat-rain-state');
@@ -2062,6 +2137,7 @@ function resetTelemetryToStandby() {
 }
 window.resetTelemetryToStandby = resetTelemetryToStandby;
 
+/** Visual pump status (Arduino JSON field pump_on: 1 or 0). */
 function updatePumpTileBar(isOn, isConnected) {
   const val = document.getElementById('stat-pump-state');
   const bar = document.getElementById('pod-pump-bar');
@@ -2089,12 +2165,13 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
   if (pmp !== undefined) AppState.isPumpActive = !!pmp;
   updatePumpTileBar(AppState.isPumpActive, AppState.hardwareConnected);
 
+  // Propagate to 3D Digital Twin simulation
   if (window.Garden3D) {
     if (typeof window.Garden3D.setSoilMoisture === 'function') window.Garden3D.setSoilMoisture(validSm !== null ? validSm : 0);
     if (typeof window.Garden3D.setWaterLevel === 'function') window.Garden3D.setWaterLevel(validTk !== null ? validTk : 0);
     if (typeof window.Garden3D.setRainState === 'function') window.Garden3D.setRainState(!!rn);
     if (pmp !== undefined && typeof window.Garden3D.triggerSpray === 'function') window.Garden3D.triggerSpray(!!pmp);
-
+    // Live Holo Vitals Call
     const curT = AppState.telemetry.airTemperature;
     const curH = AppState.telemetry.airHumidity;
     const validClimate = Number.isFinite(curT) && Number.isFinite(curH);
@@ -2103,6 +2180,7 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
     updateHoloVitals(validSm, validTk, curT, curVpd);
   }
 
+  // Safety Lockout Interlocks: Low water (<= 20%), cold temp (< 18C), saturated soil (> 65%), or rain active
   if (AppState.isPumpActive) {
     const curT = AppState.telemetry.airTemperature;
     if (validTk !== null && validTk < 20.0) {
@@ -2128,6 +2206,7 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
     }
   }
 
+  // Heartbeat pulse flash on Floating Action Capsule connection badge
   const capsuleBadge = document.getElementById('capsule-conn-badge');
   if (capsuleBadge) {
     const pDot = capsuleBadge.querySelector('.pulse-dot');
@@ -2137,6 +2216,7 @@ function applyTelemetryUpdate(sm, tk, rn, pmp) {
     }
   }
 
+  // Synchronize live value inside Morphed Detail Card if open
   if (typeof activeMorphSensor !== 'undefined' && activeMorphSensor) {
     const detailVal = document.getElementById('detail-card-val');
     if (detailVal) {
@@ -2449,7 +2529,7 @@ function recordRealTelemetrySample(soil, tank, pump) {
 }
 
 function syncTelemetryToBackend(sm, tk, rn, pmp) {
-
+  // Allow both hardware and DEMO SIM to sync telemetry (only ignore when hardware is offline and not simulated)
   if (!AppState.hardwareConnected) return;
 
   const now = Date.now();
@@ -2462,7 +2542,7 @@ function syncTelemetryToBackend(sm, tk, rn, pmp) {
   const airHum = Number.isFinite(t.airHumidity) ? t.airHumidity : null;
 
   const payload = {
-
+    // snake_case for ApiSensorServlet & LatestData
     device_id: 1,
     humidity_pct: sm,
     soil: sm,
@@ -2480,6 +2560,7 @@ function syncTelemetryToBackend(sm, tk, rn, pmp) {
     lock_reason: AppState.telemetry.lockReason || 'NONE',
     is_sample: AppState.isSimulated ? 1 : 0,
 
+    // Backward-compatible camelCase
     deviceId: 1,
     humidityPct: sm,
     temperatureC: airTemp,
@@ -2499,7 +2580,7 @@ function syncTelemetryToBackend(sm, tk, rn, pmp) {
 
 let remotePollTimer = null;
 async function remotePollTelemetry() {
-
+  // If this tab already holds an active physical WebSerial port connection, no need to poll
   if (AppState.hardwareConnected && !AppState.isSimulated && serialPort) return;
   try {
     const ctx = window.contextPath || '';
@@ -2528,7 +2609,7 @@ async function remotePollTelemetry() {
       updateHardwareConnectionUI(true, false, 'Server Telemetry Bridge', 'SERVER_BRIDGE');
     }
   } catch (e) {
-
+    // quiet
   }
 }
 window.remotePollTelemetry = remotePollTelemetry;
@@ -2992,6 +3073,9 @@ function updateHardwareHealthTab(connected, isSimulated = false, portName = '', 
   }
 }
 
+/* =====================================================================================================
+   SECTION 9: MANUAL PUMP RELAY CONTROL, COUNTDOWN TIMERS & CYCLE-AND-SOAK
+   ===================================================================================================== */
 function updatePumpCountdownUI(state, remSec) {
   const pCount = document.getElementById('stat-pump-countdown');
   const miniLabel = document.getElementById('mini-pump-status-label');
@@ -3102,7 +3186,7 @@ function handleStartPump(isOperatorAction) {
   if (isOperatorAction === undefined) isOperatorAction = true;
   if (!AppState.hardwareConnected) {
     if (AppState.isSimulated || (typeof isDemoMode !== 'undefined' && isDemoMode)) {
-
+      // Allow simulation pump run
       executeStartPumpInternal(isOperatorAction);
       return;
     }
@@ -3445,7 +3529,7 @@ function quickBoostSpray(sec) {
   if (sec === undefined) sec = 15;
   if (!AppState.hardwareConnected) {
     if (AppState.isSimulated || (typeof isDemoMode !== 'undefined' && isDemoMode)) {
-
+      // allow boost simulation
     } else {
       showToast('Offline: Link hardware device via USB or Bluetooth to actuate pump', 'amber');
       if (typeof openConnectModal === 'function') openConnectModal();
@@ -3476,6 +3560,12 @@ function quickBoostSpray(sec) {
   triggerBellNotification('15s Boost Active');
 }
 window.quickBoostSpray = quickBoostSpray;
+
+/* =====================================================================================================
+   SECTION 10: 24H LUMINOUS SPLINE TELEMETRY GRAPH (CATMULL-ROM & DUAL-HORIZON)
+   ===================================================================================================== */
+// chartCanvas and chartCtx declared globally at top
+// chartHoverIndex declared globally at top
 
 function updateLiveLogTable(timestamps, soil, tank, temps, airHum, pumps) {
   const tbody = document.getElementById('telemetry-records-tbody');
@@ -3508,7 +3598,7 @@ function generateDynamicChartData(range = '24h') {
   const cutoff = Date.now() - ms;
   const samples = (Array.isArray(AppState.telemetrySamples) ? AppState.telemetrySamples : [])
     .filter(s => s.ms >= cutoff);
-
+  // Downsample on the client without generating fictional values.
   const stride = Math.max(1, Math.ceil(samples.length / 150));
   const picked = samples.filter((sample, i) => i % stride === 0 || i === samples.length - 1);
   const timestamps = picked.map(s => s.time);
@@ -3622,6 +3712,9 @@ function drawTelemetryChart() {
 
   const isDark = AppState.theme === 'dark';
 
+  // Target bio-comfort green band removed per design simplification
+
+  // Grid lines and Y-axis scale
   chartCtx.lineWidth = 1;
   chartCtx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(15, 23, 42, 0.06)';
   chartCtx.textAlign = 'right';
@@ -3653,6 +3746,7 @@ function drawTelemetryChart() {
   const availableWidth = w - padLeft - padRight;
   const stepX = count > 1 ? availableWidth / (count - 1) : 0;
 
+  // X-axis timestamps
   chartCtx.textAlign = 'center';
   const maxLabels = Math.max(2, Math.floor(availableWidth / 75));
   const stepLabel = Math.max(1, Math.ceil(count / maxLabels));
@@ -3714,6 +3808,7 @@ function drawTelemetryChart() {
   chartCtx.rect(padLeft, padTop - 4, availableWidth, h - padTop - padBottom + 8);
   chartCtx.clip();
 
+  // 1. Reservoir Spline (Cyan)
   chartCtx.save();
   chartCtx.beginPath();
   drawCatmullRomSpline(chartCtx, tankPoints, 0.28, padTop, h - padBottom);
@@ -3722,6 +3817,7 @@ function drawTelemetryChart() {
   chartCtx.stroke();
   chartCtx.restore();
 
+  // 2. Soil Hydration Area Gradient
   chartCtx.save();
   const gradSoil = chartCtx.createLinearGradient(0, padTop, 0, h - padBottom);
   gradSoil.addColorStop(0, isDark ? 'rgba(16, 185, 129, 0.28)' : 'rgba(16, 185, 129, 0.20)');
@@ -3738,6 +3834,7 @@ function drawTelemetryChart() {
   chartCtx.fill();
   chartCtx.restore();
 
+  // 3. Soil Hydration Stroke (Glowing Emerald)
   chartCtx.save();
   chartCtx.beginPath();
   drawCatmullRomSpline(chartCtx, soilPoints, 0.28, padTop, h - padBottom);
@@ -3748,6 +3845,7 @@ function drawTelemetryChart() {
   chartCtx.stroke();
   chartCtx.restore();
 
+  // 4. Real air-humidity curve (DHT11 / air_hum). Missing DHT values leave gaps.
   const humiditySeries = AppState.chartData.airHum || [];
   chartCtx.save();
   chartCtx.beginPath();
@@ -3763,8 +3861,9 @@ function drawTelemetryChart() {
   chartCtx.lineWidth = 2;
   chartCtx.stroke();
   chartCtx.restore();
-  chartCtx.restore();
+  chartCtx.restore(); // unclip
 
+  // 5. Data nodes on Soil points
   soilPoints.forEach((p, idx) => {
     chartCtx.save();
     chartCtx.beginPath();
@@ -3785,6 +3884,7 @@ function drawTelemetryChart() {
     chartCtx.restore();
   });
 
+  // 5. Interactive Crosshair & Floating Tooltip on Hover
   if (chartHoverIndex >= 0 && chartHoverIndex < count) {
     const sp = soilPoints[chartHoverIndex];
     const tp = tankPoints[chartHoverIndex];
@@ -3796,7 +3896,7 @@ function drawTelemetryChart() {
       : '--';
 
     chartCtx.save();
-
+    // Vertical hairline
     chartCtx.beginPath();
     chartCtx.setLineDash([3, 3]);
     chartCtx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(15, 23, 42, 0.35)';
@@ -3806,6 +3906,7 @@ function drawTelemetryChart() {
     chartCtx.stroke();
     chartCtx.setLineDash([]);
 
+    // Highlight circles on hover nodes
     chartCtx.beginPath();
     chartCtx.arc(sp.x, sp.y, 4.5, 0, Math.PI * 2);
     chartCtx.fillStyle = '#10b981';
@@ -3822,6 +3923,7 @@ function drawTelemetryChart() {
     chartCtx.lineWidth = 1.8;
     chartCtx.stroke();
 
+    // Floating Tooltip Box
     const humSample = AppState.chartData.airHum && AppState.chartData.airHum[chartHoverIndex];
     const hoverHum = Number.isFinite(humSample) ? humSample.toFixed(1) + '%' : '--';
     const tipText = `${hoverTime} S:${hoverSoil}% W:${hoverTank}% H:${hoverHum} T:${hoverTemp}\u00B0C`;
@@ -3913,6 +4015,9 @@ function exportTelemetryCSV() {
   showToast('CSV exported', 'success');
 }
 
+/* =====================================================================================================
+   SECTION 11: HISTORY & IMMUTABLE AUDIT LOGS
+   ===================================================================================================== */
 function renderHistoryTables() {
   const tbPump = document.getElementById('tbody-pump-logs');
   if (tbPump) {
@@ -4129,6 +4234,9 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/* =====================================================================================================
+   SECTION 12: MODALS, TOASTS & UTILITY HELPERS
+   ===================================================================================================== */
 function openModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
@@ -4195,6 +4303,9 @@ function executeSignOut() {
 
 const saveSettings = saveMistingSettings;
 
+/* =====================================================================================================
+   SECTION 13: GLOBAL WINDOW EXPORTS (GUARANTEES 100% RELIABLE INLINE ONCLICK CALLS)
+   ===================================================================================================== */
 window.initApp = initApp;
 window.navigateTo = navigateTo;
 window.toggleSidebar = toggleSidebar;
@@ -4254,6 +4365,12 @@ window.exportTelemetryCSV = exportTelemetryCSV;
 window.executeSignOut = executeSignOut;
 window.AppState = AppState;
 
+/* =========================================================================
+   DOCK TOGGLE, BELL FLYOUT & MINI-SQUARE HARDWARE CONTROLLER
+   ========================================================================= */
+/* =========================================================================
+   CENTRAL NOTIFICATION SYSTEM: BELL FLYOUT (PROTRUDING LEFT) & 5-RECENT STORE
+   ========================================================================= */
 let systemRecentNotifications = [];
 let notifFlyoutTimer = null;
 
@@ -4299,6 +4416,7 @@ function pushSystemNotification(msg, type) {
   saveStoredNotifications();
   renderNotificationDropdown();
 
+  // Bell ring & status dot
   const bell = document.getElementById('btn-notif-bell');
   const dot = document.getElementById('bell-status-dot');
   if (bell) {
@@ -4310,6 +4428,7 @@ function pushSystemNotification(msg, type) {
     dot.classList.add('active');
   }
 
+  // Slide out flyout banner protruding to the LEFT of the bell
   showNotifFlyout(item);
 }
 window.pushSystemNotification = pushSystemNotification;
@@ -4491,6 +4610,9 @@ function toggleModeFromSquare() {
 }
 window.toggleModeFromSquare = toggleModeFromSquare;
 
+/* =====================================================================================================
+   SECTION 14: DIGITAL TWIN 3D INTEGRATION, FLOATING ACTION CAPSULE & FLIP MORPHING UI CONTROLLER
+   ===================================================================================================== */
 let quickSprayInterval = null;
 let quickSprayRemaining = 0;
 let activeMorphSensor = null;
@@ -4695,8 +4817,10 @@ function openDetailCard(sensorKey, tileEl) {
   const hexTiles = document.querySelectorAll('.hex-tile');
   const resolvedTile = tileEl || document.querySelector(`.hex-tile[data-sensor="${sensorKey}"]`);
 
+  // Remove any in-flight return ghost
   document.querySelectorAll('.morph-return-ghost').forEach(g => g.remove());
 
+  // Trigger 3D camera smooth spherical lerp focus onto physical sensor
   if (window.Garden3D && typeof window.Garden3D.focus === 'function') {
     window.Garden3D.focus(sensorKey);
   }
@@ -4705,6 +4829,7 @@ function openDetailCard(sensorKey, tileEl) {
     const cfg = SENSOR_TARGET_CONFIG[sensorKey] || SENSOR_TARGET_CONFIG.soil;
     detailCard.style.setProperty('--morph-accent', cfg.accent || '#10B981');
 
+    // Measure exact FLIP displacement vector from source hexagon to morphed card
     detailCard.classList.remove('morphed-open');
     detailCard.style.display = 'block';
 
@@ -4795,6 +4920,7 @@ function openDetailCard(sensorKey, tileEl) {
 
       let alertShown = false;
 
+      // Priority 1: Soil saturated + heat — absolute mist lockout (root rot risk)
       if (soilVal >= 65 && tempVal > 28) {
         agriAlert.style.display = 'block';
         agriAlert.style.background = 'rgba(239, 68, 68, 0.1)';
@@ -4804,6 +4930,7 @@ function openDetailCard(sensorKey, tileEl) {
           'Substrate \u226565% + temp >28\u00b0C: Misting LOCKED. Soil priority wins. Convective vent cooling active to protect <em>Ludisia discolor</em> rhizomes from Pythium rot.');
         alertShown = true;
 
+      // Priority 2: Substrate saturated — pump locked regardless of air humidity
       } else if (soilVal >= 65) {
         agriAlert.style.display = 'block';
         agriAlert.style.background = 'rgba(245, 158, 11, 0.1)';
@@ -4813,6 +4940,7 @@ function openDetailCard(sensorKey, tileEl) {
           'Substrate \u226565%: Misting locked. Waiting for substrate to drain below 65% before next pulse. Root aeration protected.');
         alertShown = true;
 
+      // Priority 3: Cold lockout — no misting below 18°C
       } else if (tempVal < 18) {
         agriAlert.style.display = 'block';
         agriAlert.style.background = 'rgba(6, 182, 212, 0.1)';
@@ -4822,6 +4950,7 @@ function openDetailCard(sensorKey, tileEl) {
           'Temp <18\u00b0C: All misting suspended. At this temperature Ludisia discolor halts water uptake; any moisture causes immediate cold rot of rhizome and roots.');
         alertShown = true;
 
+      // Priority 4: Leaf wetness detected — emergency interlock
       } else if (isRainWet && (sensorKey === 'rain' || sensorKey === 'relay')) {
         agriAlert.style.display = 'block';
         agriAlert.style.background = 'rgba(239, 68, 68, 0.08)';
@@ -4925,6 +5054,7 @@ function closeDetailCard() {
     (activeMorphSensor ? document.querySelector(`.hex-tile[data-sensor="${activeMorphSensor}"]`) : null);
   const cfg = activeMorphSensor ? SENSOR_TARGET_CONFIG[activeMorphSensor] : null;
 
+  // Spawn visual FLIP return ghost flying back into the exact hexagon socket
   if (detailCard && detailCard.style.display !== 'none' && sourceTile && typeof detailCard.getBoundingClientRect === 'function') {
     const cardRect = detailCard.getBoundingClientRect();
     const tileRect = sourceTile.getBoundingClientRect();
@@ -4957,6 +5087,7 @@ function closeDetailCard() {
     }
   }
 
+  // Synchronous state reset for 100% E2E test compliance
   const hexTiles = document.querySelectorAll('.hex-tile');
   if (detailCard) {
     detailCard.style.display = 'none';
@@ -5023,12 +5154,13 @@ function renderMiniSparkline(canvas, dataPoints = [], strokeColor = '#10B981') {
 }
 
 function initDigitalTwinWiring() {
-
+  // Ensure initial default telemetry metrics are populated immediately
   if (typeof updateLiveDashboard === 'function') {
     updateLiveDashboard(52.0, 78.0, false, 25.0, false);
   }
   if (typeof document === 'undefined') return;
 
+  // 1. Floating Action Capsule Quick Spray button
   const btnQuickSpray = document.getElementById('btn-quick-spray');
   if (btnQuickSpray && !btnQuickSpray._boundSpray) {
     btnQuickSpray._boundSpray = true;
@@ -5038,6 +5170,7 @@ function initDigitalTwinWiring() {
     });
   }
 
+  // 2. Capsule Mode Toggle
   const btnToggleMode = document.getElementById('btn-toggle-mode');
   if (btnToggleMode && !btnToggleMode._boundToggle) {
     btnToggleMode._boundToggle = true;
@@ -5063,6 +5196,7 @@ function initDigitalTwinWiring() {
     });
   }
 
+  // 3. Capsule Plant Selector
   const plantSelector = document.getElementById('capsule-plant-selector');
   if (plantSelector && !plantSelector._boundChange) {
     plantSelector._boundChange = true;
@@ -5082,6 +5216,7 @@ function initDigitalTwinWiring() {
     });
   }
 
+  // 4. Capsule Connection Badge
   const connBadge = document.getElementById('capsule-conn-badge');
   if (connBadge && !connBadge._boundClick) {
     connBadge._boundClick = true;
@@ -5091,6 +5226,7 @@ function initDigitalTwinWiring() {
     });
   }
 
+  // 5. Telemetry Drawer Triggers
   const btnOpenDrawer = document.getElementById('btn-open-drawer');
   if (btnOpenDrawer && !btnOpenDrawer._boundOpen) {
     btnOpenDrawer._boundOpen = true;
@@ -5124,6 +5260,7 @@ function initDigitalTwinWiring() {
     });
   }
 
+  // 6. Organic Hex-Cluster Click & FLIP Morphing Detail Card
   const hexTiles = document.querySelectorAll('.hex-tile');
   hexTiles.forEach(tile => {
     if (!tile._boundHexClick) {
@@ -5147,6 +5284,7 @@ function initDigitalTwinWiring() {
     });
   }
 
+  // Outside click to collapse detail card
   if (!document._boundOutsideCardClick) {
     document._boundOutsideCardClick = true;
     document.addEventListener('click', (e) => {
@@ -5174,6 +5312,7 @@ function initDigitalTwinWiring() {
     });
   }
 
+  // 7. Window resize synchronization
   if (typeof window !== 'undefined' && !window._boundDigitalTwinResize) {
     window._boundDigitalTwinResize = true;
     window.addEventListener('resize', () => {
@@ -5184,12 +5323,14 @@ function initDigitalTwinWiring() {
     });
   }
 
+  // 8. Solar Lighting based on local time
   if (window.Garden3D && typeof window.Garden3D.setDayNightHour === 'function') {
     const now = new Date();
     window.Garden3D.setDayNightHour(now.getHours() + now.getMinutes() / 60);
   }
 }
 
+// Global Window & Controller Exports
 window.startQuickSpray = startQuickSpray;
 window.stopQuickSpray = stopQuickSpray;
 window.toggleModeFromCapsule = toggleModeFromCapsule;
@@ -5211,6 +5352,9 @@ window.DashboardController = {
   getActiveMorphSensor: () => activeMorphSensor
 };
 
+/* =========================================================================
+   LIVE REAL-TIME CLOCK & WEATHER FORECAST SYSTEM (Open-Meteo API)
+   ========================================================================= */
 (function initLiveClockAndWeather() {
   function updateLiveClock() {
     const timeEl = document.getElementById('hud-live-time');
@@ -5311,6 +5455,7 @@ window.DashboardController = {
           rainProbEl.textContent = Math.round(data.daily.precipitation_probability_max[0] || 15) + '%';
         }
 
+        // Real hourly forecast milestones from Open-Meteo
         const m08 = document.getElementById('ms-temp-08');
         const m12 = document.getElementById('ms-temp-12');
         const m16 = document.getElementById('ms-temp-16');
@@ -5397,8 +5542,13 @@ window.DashboardController = {
   });
 
   setTimeout(fetchLiveWeather, 500);
-  setInterval(fetchLiveWeather, 30 * 60 * 1000);
+  setInterval(fetchLiveWeather, 30 * 60 * 1000); // 30 mins
 })();
+
+
+/* =====================================================================================================
+   SECTION 18: PAN DOCK, CAPSULE ACTUATION, ACCORDIONS & AI AGRONOMIST COPILOT
+   ===================================================================================================== */
 
 function updatePanBadge(val) {
   const badge = document.getElementById('pan-val-badge');
@@ -5427,15 +5577,17 @@ function initDraggableStudioBar() {
   let initialOffsetTop = 0;
 
   const onPointerDown = (e) => {
-
+    // Only primary button
     if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
 
+    // Do not initiate drag when interacting with the range slider thumb
     if (e.target.closest('input[type="range"]')) return;
 
     startX = e.clientX;
     startY = e.clientY;
     dragThresholdPassed = false;
 
+    // Calculate position relative to container (#digital-twin-viewport)
     const parent = dock.offsetParent || dock.parentElement || document.body;
     const parentRect = parent.getBoundingClientRect();
     const dockRect = dock.getBoundingClientRect();
@@ -5596,7 +5748,7 @@ async function handleCapsuleStopPump() {
     showToast('Pump is already idle.', 'info');
     return;
   }
-
+  // First disable automatic restarts; then transmit PUMP_OFF through the existing stop routine.
   if (!AppState.isSimulated && AppState.systemMode === 'AUTO') {
     const switched = await sendRawSerialCommand('MODE_MANUAL');
     if (!switched) {
@@ -5624,6 +5776,11 @@ function toggleAccordion(accId) {
 }
 window.toggleAccordion = toggleAccordion;
 
+
+/* =====================================================================================================
+   SECTION 18 (CONT): AI AGRONOMIST COPILOT & AUTONOMOUS GROUNDSKEEPER MASCOT
+   ===================================================================================================== */
+
 let farmerWanderTimer = null;
 let currentFarmerStation = -1;
 
@@ -5631,7 +5788,7 @@ function toggleAiChatBot(forceState) {
   const chatCard = document.getElementById('ai-chat-card');
   if (!chatCard) return;
   const isOpening = forceState !== undefined ? Boolean(forceState) : !chatCard.classList.contains('open');
-
+  
   if (isOpening) {
     chatCard.classList.add('open');
     chatCard.style.display = 'flex';
@@ -5803,7 +5960,7 @@ function getCurrentRoleCode() {
 
 function getRealSystemSnapshot() {
   const isOnline = Boolean(window.AppState && (window.AppState.hardwareConnected || window.AppState.isSimulated));
-
+  
   const soilEl = document.getElementById('stat-soil-hum') || document.querySelector('.hex-tile[data-sensor="soil"] .hex-val');
   const tankEl = document.getElementById('stat-water-lvl') || document.querySelector('.hex-tile[data-sensor="water"] .hex-val');
   const tempEl = document.getElementById('stat-temp') || document.querySelector('.hex-tile[data-sensor="temperature"] .hex-val');
@@ -5886,6 +6043,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     roleNotice = 'Authorization: You are logged in as VIEWER (read-only telemetry observer). Actuation commands and threshold edits are restricted to Staff and Administrators.';
   }
 
+  // 1. GREETINGS
   if (/^(hi|hello|hey|greetings|good\s+morning|good\s+afternoon|good\s+evening|chao|xin\s+chao)\b/i.test(norm)) {
     return {
       text: '<strong>Dr. Flora Technical Assistant Online</strong><br>' +
@@ -5899,6 +6057,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 2. SYSTEM INVENTORY, COMPONENTS & ARCHITECTURE ("WHAT DOES THE SYSTEM HAVE ?")
   if (/\b(system\s+have|what\s+does\s+the\s+system\s+have|what\s+do\s+you\s+have|components|hardware|inventory|devices|parts|modules|architecture|he\s+thong\s+co\s+gi|co\s+nhung\s+gi|linh\s+kien|thiet\s+bi|cau\s+truc|kien\s+truc)\b/i.test(norm) ||
       (norm.includes('system') && (norm.includes('have') || norm.includes('contain') || norm.includes('include') || norm.includes('consist') || norm.includes('feature') || norm.includes('structure') || norm.includes('component')))) {
     return {
@@ -5921,6 +6080,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 3. USER GUIDE, MANUAL & HOW TO OPERATE ("USER GUIDE SYSTEM")
   if (/\b(user\s+guide|how\s+to|guide|manual|tutorial|instructions|how\s+do\s+i|how\s+to\s+use|how\s+to\s+operate|operation|huong\s+dan|cach\s+dung|cach\s+su\s+dung)\b/i.test(norm)) {
     return {
       text: '<strong>Operator Guide | Smart Misting SCADA Interface</strong><br><br>' +
@@ -5941,6 +6101,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 4. USER MANAGEMENT & RBAC GOVERNANCE (Only when NOT a guide/manual request)
   if (/\b(add\s+user|create\s+user|user\s+account|accounts|rbac|user\s+list|change\s+password|user\s+management|tai\s+khoan|phan\s+quyen|mat\s+khau)\b/i.test(norm) && !norm.includes('guide') && !norm.includes('huong dan')) {
     return {
       text: '<strong>User Governance & Access Control (RBAC)</strong><br><br>' +
@@ -5953,6 +6114,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 5. BOT IDENTITY & ARCHITECTURE
   if (/\b(who\s+are\s+you|what\s+are\s+you|about\s+yourself|dr\s+flora|what\s+can\s+you\s+do|ban\s+la\s+ai|gioi\s+thieu)\b/i.test(norm)) {
     return {
       text: '<strong>Dr. Flora | SCADA Botanical Intelligence Agent</strong><br>' +
@@ -5964,6 +6126,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 6. SYSTEM CLOCK, TIME & PHOTOPERIOD
   if (/\b(time|clock|date|today|hour|what\s+time|may\s+gio|thoi\s+gian)\b/i.test(norm)) {
     const now = new Date();
     return {
@@ -5974,6 +6137,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 7. SAFETY INTERLOCKS, LOCKOUTS & TROUBLESHOOTING
   if (/\b(safety|interlock|lockout|cutoff|locked|cannot\s+spray|cannot\s+mist|troubleshoot|overpressure|watchdog|khoa\s+an\s+toan|tai\s+sao\s+khoa)\b/i.test(norm)) {
     let reasons = [];
     if (isRain) reasons.push('Rain Sensor Lockout: Ambient canopy precipitation active. Mist held to avoid root saturation.');
@@ -5990,6 +6154,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 8. OPERATING MODE (AUTO vs MANUAL)
   if (/\b(mode|auto\s+mode|manual\s+mode|switch\s+mode|operating\s+mode|toggle\s+mode|che\s+do|tu\s+dong|thu\s+cong)\b/i.test(norm)) {
     return {
       text: '<strong>Operating Mode State: ' + mode + '</strong><br>' +
@@ -6000,6 +6165,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 9. PUMP ACTUATION, MISTING CONTROLS & BOOST
   if (/\b(pump|mist|misting|spray|nozzle|ultrasonic|actuate|actuation|may\s+bom|phun\s+suong|tuoi\s+cay|tuoi\s+nuoc)\b/i.test(norm)) {
     return {
       text: '<strong>Ultrasonic Mist Actuation Diagnostic</strong><br>' +
@@ -6011,6 +6177,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 10. HARDWARE LINK, ARDUINO UNO & WEBSERIAL CONNECTION
   if (/\b(arduino|uno|webserial|baud|serial\s*port|com\s*\d+|com\s*port|demo\s*sim|simulation|simulator|phan\s*cung)\b/i.test(norm)) {
     return {
       text: '<strong>Embedded Hardware Diagnostic: Arduino Uno R3</strong><br>' +
@@ -6021,6 +6188,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 11. SOIL MOISTURE & SUBSTRATE HYDRATION
   if (/\b(soil|substrate|hydration|do\s+am\s+dat|gia\s+the)\b/i.test(norm)) {
     const sVal = parseFloat(soil) || 58;
     const low = parseFloat(humOn) || 55;
@@ -6038,6 +6206,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 12. WATER TANK & RESERVOIR CAPACITY
   if (/\b(water\s+tank|reservoir|tank\s+level|refill|water\s+level|binh\s+nuoc|muc\s+nuoc|het\s+nuoc)\b/i.test(norm)) {
     const tVal = parseFloat(tank) || 85;
     let alert = '';
@@ -6057,6 +6226,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 13. TEMPERATURE, RELATIVE HUMIDITY, VPD & CLIMATE
   if (/\b(temp|temperature|air\s+humidity|humidity|vpd|microclimate|vapor\s+pressure|nhiet\s+do|khi\s+hau)\b/i.test(norm)) {
     return {
       text: '<strong>Terrarium Atmospheric Microclimate Diagnostic</strong><br>' +
@@ -6067,6 +6237,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 14. RAIN SENSOR & CANOPY PRECIPITATION
   if (/\b(rain|raining|precipitation|raindrop|canopy\s+moisture|cam\s+bien\s+mua|troi\s+mua|mua\s+khong)\b/i.test(norm)) {
     return {
       text: '<strong>Canopy Rain Sensor Telemetry</strong><br>' +
@@ -6077,6 +6248,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 15. PLANT SPECIES, BOTANY & LUDISIA DISCOLOR
   if (/\b(plant|species|ludisia|discolor|orchid|boston\s+fern|moth\s+orchid|botany|botanical|foliage|turgor|lan\s+gam)\b/i.test(norm)) {
     return {
       text: '<strong>Botanical Profile: ' + plantName + '</strong><br>' +
@@ -6088,6 +6260,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 16. TELEMETRY HORIZON, CHARTS & CSV EXPORT
   if (/\b(chart|graph|spline|telemetry\s+horizon|export|csv|bieu\s+do)\b/i.test(norm)) {
     return {
       text: '<strong>Bio-Telemetry Horizon & Data Logging Deck</strong><br>' +
@@ -6097,6 +6270,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 17. HISTORY & AUDIT LOGS
   if (/\b(history|audit\s+log|audit\s+trail|records|lich\s+su)\b/i.test(norm)) {
     return {
       text: '<strong>SCADA Audit Log & Historical Telemetry Registry</strong><br>' +
@@ -6106,6 +6280,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 18. OVERALL SYSTEM STATUS & TELEMETRY SUMMARY
   if (/\b(status|overview|system\s+state|summary|telemetry|dashboard|how\s+is\s+everything|tong\s+quan|tinh\s+hinh|tinh\s+trang)\b/i.test(norm)) {
     return {
       text: '<strong>Overall SCADA System Status & Telemetry Summary</strong><br><br>' +
@@ -6120,6 +6295,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     };
   }
 
+  // 19. MATH CALCULATIONS
   const mathMatch = userQuery.match(/^([0-9.\s+\-*\/()]+)$/);
   if (mathMatch) {
     try {
@@ -6135,6 +6311,7 @@ function generateIntelligentAgronomistReply(userQuery) {
     } catch (e) {}
   }
 
+  // 20. STRICT OUT-OF-SCOPE BOUNDARY NOTICE FOR UNRELATED QUESTIONS
   return {
     text: '<strong>Out-of-Scope Query Notice</strong><br>' +
           'The inquiry <em>"' + safeQuery + '"</em> is outside the operational scope of the Smart Misting SCADA & Botanical Intelligence System.<br><br>' +
@@ -6302,6 +6479,7 @@ function sendAiQuickPrompt(topic) {
 }
 window.sendAiQuickPrompt = sendAiQuickPrompt;
 
+/* ── Autonomous Groundskeeper Mascot Wandering & Draggable Controls ── */
 function setFarmerVisualState(isRiding) {
   const comp = document.getElementById('ai-farmer-companion');
   const avatar = document.getElementById('farmer-avatar-btn');
@@ -6343,7 +6521,7 @@ function initDraggableCompanion() {
     hasMoved = false;
     startX = e.clientX;
     startY = e.clientY;
-
+    
     if (typeof farmerWanderTimer !== 'undefined' && farmerWanderTimer) {
       clearTimeout(farmerWanderTimer);
     }
@@ -6407,6 +6585,7 @@ function initDraggableChatCard() {
     });
   }
 
+  // Global Escape key listener to close chatbot effortlessly
   if (!window._boundChatEscape) {
     window._boundChatEscape = true;
     window.addEventListener('keydown', (e) => {
@@ -6419,6 +6598,7 @@ function initDraggableChatCard() {
     });
   }
 
+  // Click / touch outside chatbot card listener to close
   if (!window._boundChatOutside) {
     window._boundChatOutside = true;
     document.addEventListener('pointerdown', (e) => {
@@ -6676,6 +6856,7 @@ function startAutonomousFarmerWander() {
 }
 window.startAutonomousFarmerWander = startAutonomousFarmerWander;
 
+
 function toggleStudioDock() {
   const dock = document.getElementById('g3d-studio-dock');
   const controls = document.getElementById('g3d-dock-controls');
@@ -6690,6 +6871,7 @@ function toggleStudioDock() {
   }
 }
 window.toggleStudioDock = toggleStudioDock;
+
 
 function initDraggableHexCluster() {
   const cluster = document.getElementById('organic-hex-cluster');
@@ -6713,12 +6895,15 @@ window.addEventListener("beforeunload", function() {
   } catch (e) {}
 });
 
+// Hook wandering into DOMContentLoaded / view initialization
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => { setTimeout(startAutonomousFarmerWander, 1200); });
 } else {
   setTimeout(startAutonomousFarmerWander, 1200);
 }
-
+// =========================================================================
+// DEFERRED APPLICATION BOOTSTRAP (Prevents TDZ ReferenceErrors)
+// =========================================================================
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     initApp();
@@ -6727,6 +6912,8 @@ if (document.readyState === 'loading') {
   setTimeout(initApp, 0);
 }
 
+
+// Periodic Groundskeeper Speech Bubbles
 setInterval(() => {
   if (typeof updateFarmerSpeech === 'function' && document.body.classList.contains('dashboard-active') && !document.body.classList.contains('chat-is-open')) {
     updateFarmerSpeech();

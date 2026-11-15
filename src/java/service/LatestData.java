@@ -5,15 +5,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LatestData {
     public static class Snap {
-        public final double soil;
-        public final Double airHum;
-        public final Double airTemp;
-        public final boolean waterOk;
-        public final boolean sensorOk;
-        public final boolean dhtOk;
-        public final boolean pumpOn;
-        public final boolean sample;
-        public final long at;
+        public final double soil;          // humidity_pct (Do am dat)
+        public final Double airHum;        // Do am khong khi RH (%)
+        public final Double airTemp;       // Nhiet do khong khi (C)
+        public final boolean waterOk;      // Trang thai khay nuoc (>20%)
+        public final boolean sensorOk;     // Trang thai cam bien dat
+        public final boolean dhtOk;        // Trang thai cam bien DHT
+        public final boolean pumpOn;       // Trang thai vi phun
+        public final boolean sample;       // true = DEMO SIM, false = Phan cung that
+        public final long at;              // Thoi diem nhan goi tin (epoch ms)
 
         public Snap(double soil, Double airHum, Double airTemp, boolean waterOk,
                     boolean sensorOk, boolean dhtOk, boolean pumpOn, boolean sample) {

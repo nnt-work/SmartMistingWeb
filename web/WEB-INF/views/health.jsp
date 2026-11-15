@@ -48,8 +48,7 @@
             font-weight: 700;
             color: var(--text-primary);
         }
-
-</style>
+    </style>
 </head>
 <body>
 <div class="health-wrapper">
@@ -104,8 +103,7 @@
             long pingAgoSec = pingAt > 0 ? (System.currentTimeMillis() - pingAt) / 1000 : -1;
             int pingStatus = service.Heartbeat.getLastPingStatus();
             java.util.List<service.AlertManager.AlertEvent> recentAlerts = service.AlertManager.getRecentEvents();
-
-%>
+        %>
 
         <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);">
             Integration &amp; Watchdog Status:
@@ -142,65 +140,44 @@
             <div class="status-box">
                 <div class="status-title">Telemetry Stream</div>
                 <div class="status-val">
-                    <% if (isStopped) {
-%>
+                    <% if (isStopped) { %>
                         <span class="badge badge-warn">STANDBY (STOPPED)</span>
-                    <% } else if (ageSec >= 0 && ageSec <= 35) {
-%>
-                        <span class="badge badge-success">ONLINE (<%= snap != null && snap.sample ? "DEMO SIM" : "IOT HW"
-%>)</span>
-                    <% } else if (ageSec > 35) {
-%>
-                        <span class="badge badge-danger">OFFLINE (<%= ageSec
-%>s ago)</span>
-                    <% } else {
-%>
+                    <% } else if (ageSec >= 0 && ageSec <= 35) { %>
+                        <span class="badge badge-success">ONLINE (<%= snap != null && snap.sample ? "DEMO SIM" : "IOT HW" %>)</span>
+                    <% } else if (ageSec > 35) { %>
+                        <span class="badge badge-danger">OFFLINE (<%= ageSec %>s ago)</span>
+                    <% } else { %>
                         <span class="badge badge-secondary">WAITING DATA</span>
-                    <% }
-%>
+                    <% } %>
                 </div>
             </div>
 
             <div class="status-box">
                 <div class="status-title">Heartbeat Last Ping</div>
                 <div class="status-val">
-                    <% if (pingAgoSec >= 0) {
-%>
-                        <%= pingAgoSec
-%>s ago <span class="badge <%= pingStatus == 200 ? "badge-success" : "badge-danger"
-%>">HTTP <%= pingStatus
-%></span>
-                    <% } else {
-%>
+                    <% if (pingAgoSec >= 0) { %>
+                        <%= pingAgoSec %>s ago <span class="badge <%= pingStatus == 200 ? "badge-success" : "badge-danger" %>">HTTP <%= pingStatus %></span>
+                    <% } else { %>
                         <span style="color: var(--text-secondary); font-size: 0.8rem;">Awaiting stream</span>
-                    <% }
-%>
+                    <% } %>
                 </div>
             </div>
         </div>
 
-        <% if (snap != null) {
-%>
+        <% if (snap != null) { %>
         <div style="margin-bottom: 20px; font-size: 0.85rem; background: var(--bg-secondary); padding: 14px 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
             <strong>Current Microclimate Snapshot:</strong><br>
             <div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 14px;">
-                <span>Soil: <strong><%= String.format("%.1f", snap.soil)
-%>%</strong></span>
-                <span>Air RH: <strong><%= snap.airHum != null ? String.format("%.1f", snap.airHum) + "%" : "--"
-%></strong></span>
-                <span>Air Temp: <strong><%= snap.airTemp != null ? String.format("%.1f", snap.airTemp) + "°C" : "--"
-%></strong></span>
-                <span>Water Tank: <strong><%= snap.waterOk ? "OK (>20%)" : "LOW (<=20%)"
-%></strong></span>
-                <span>Mist Pump: <strong><%= snap.pumpOn ? "RUNNING" : "IDLE"
-%></strong></span>
+                <span>Soil: <strong><%= String.format("%.1f", snap.soil) %>%</strong></span>
+                <span>Air RH: <strong><%= snap.airHum != null ? String.format("%.1f", snap.airHum) + "%" : "--" %></strong></span>
+                <span>Air Temp: <strong><%= snap.airTemp != null ? String.format("%.1f", snap.airTemp) + "°C" : "--" %></strong></span>
+                <span>Water Tank: <strong><%= snap.waterOk ? "OK (>20%)" : "LOW (<=20%)" %></strong></span>
+                <span>Mist Pump: <strong><%= snap.pumpOn ? "RUNNING" : "IDLE" %></strong></span>
             </div>
         </div>
-        <% }
-%>
+        <% } %>
 
-        <% if (!recentAlerts.isEmpty()) {
-%>
+        <% if (!recentAlerts.isEmpty()) { %>
         <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; color: var(--text-primary);">Recent Alert History:</h3>
         <div class="table-responsive" style="margin-bottom: 24px;">
             <table class="data-table">
@@ -212,24 +189,17 @@
                     </tr>
                 </thead>
                 <tbody>
-                <% for (service.AlertManager.AlertEvent ev : recentAlerts) {
-%>
+                <% for (service.AlertManager.AlertEvent ev : recentAlerts) { %>
                     <tr>
-                        <td><strong><%= ev.code
-%></strong></td>
-                        <td><span class="badge <%= "RECOVERY".equals(ev.level) ? "badge-success" : ("CRITICAL".equals(ev.level) ? "badge-danger" : "badge-warn")
-%>"><%= ev.level
-%></span></td>
-                        <td style="font-size: 0.82rem;"><%= ev.message
-%></td>
+                        <td><strong><%= ev.code %></strong></td>
+                        <td><span class="badge <%= "RECOVERY".equals(ev.level) ? "badge-success" : ("CRITICAL".equals(ev.level) ? "badge-danger" : "badge-warn") %>"><%= ev.level %></span></td>
+                        <td style="font-size: 0.82rem;"><%= ev.message %></td>
                     </tr>
-                <% }
-%>
+                <% } %>
                 </tbody>
             </table>
         </div>
-        <% }
-%>
+        <% } %>
 
         <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);">Database Table Records:</h3>
         <div class="table-responsive" style="margin-bottom: 24px;">

@@ -8,6 +8,10 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import service.Notifier.Level;
 
+/**
+ * Background Monitoring & SCADA Scheduling Service
+ * Real-time continuous evaluation of botanical microclimate thresholds for Ludisia discolor.
+ */
 public class AlertService {
 
     private static volatile AlertService instance;
@@ -58,6 +62,7 @@ public class AlertService {
 
         scheduler = Executors.newScheduledThreadPool(2, daemon("scada-sched"));
 
+        // Periodic watchdog loop: checks DATA_LOST and flushes aggregated events
         scheduler.scheduleWithFixedDelay(() -> {
             try {
                 evaluateStreamTimeout();
@@ -67,6 +72,7 @@ public class AlertService {
             }
         }, 2, 2, TimeUnit.SECONDS);
 
+        // Daily summary check at 18:00 ICT
         scheduler.scheduleWithFixedDelay(this::checkDailySummary, 30, 60, TimeUnit.SECONDS);
 
         started = true;
@@ -89,6 +95,10 @@ public class AlertService {
         return started;
     }
 
+    /**
+     * Ingestion point called immediately whenever telemetry arrives from the IoT device or WebSerial bridge.
+     * Evaluates microclimate rules instantly with zero dependency on SQL database latency.
+     */
     public synchronized void onTelemetry(int deviceId, Double soil, Double rh, Double temp, Double water,
                                         boolean waterOk, boolean sensorOk, boolean dhtOk, boolean pumpOn,
                                         String mode, String lock) {
@@ -100,6 +110,7 @@ public class AlertService {
         long previousAt = lastTelemetryAt;
         lastTelemetryAt = now;
 
+        // 1. Connection & Reconnection state
         if (!hasSeenTelemetry) {
             hasSeenTelemetry = true;
             am.notifyDeviceConnected();
@@ -111,6 +122,7 @@ public class AlertService {
 
         am.markTelemetry(false);
 
+        // Update in-memory snapshot for web dashboard readers
         LatestData.update(deviceId, new LatestData.Snap(
                 soil == null ? Double.NaN : soil,
                 rh,
@@ -122,6 +134,7 @@ public class AlertService {
                 false
         ));
 
+        // 2. Mode Change Tracking
         String cleanMode = (mode != null && mode.toUpperCase().contains("MANUAL")) ? "MANUAL" : "AUTO";
         if (previousMode == null) {
             previousMode = cleanMode;
@@ -140,6 +153,7 @@ public class AlertService {
             previousMode = cleanMode;
         }
 
+        // 3. Actuation State Tracking (Relay ON / OFF transition)
         if (previousPumpState == null) {
             previousPumpState = pumpOn;
         } else if (previousPumpState != pumpOn) {
@@ -147,32 +161,40 @@ public class AlertService {
             previousPumpState = pumpOn;
         }
 
+        // 4. Critical Microclimate Safety Interlocks
         String cleanLock = (lock != null) ? lock.trim().toUpperCase() : "NONE";
 
+        // WATER_LOW (< 20%)
         boolean waterCritical = !waterOk || (water != null && water < 20.0) || cleanLock.equals("WATER") || cleanLock.equals("5");
         String waterReading = "Water Reservoir: " + (water != null ? Math.round(water) + "%" : "< 20%");
         am.evaluate("WATER_LOW", Level.CRITICAL, waterCritical, 0L, waterReading, "Water Reservoir: " + (water != null ? Math.round(water) + "%" : ">= 20%"));
 
+        // COLD (< 18.0°C)
         boolean tempCold = (temp != null && temp < 18.0) || cleanLock.equals("TEMP") || cleanLock.equals("COLD") || cleanLock.equals("3");
         String tempReading = "Ambient Temperature: " + (temp != null ? String.format("%.1f", temp) + "°C" : "< 18.0°C");
         am.evaluate("COLD", Level.CRITICAL, tempCold, 0L, tempReading, "Ambient Temperature: " + (temp != null ? String.format("%.1f", temp) + "°C" : ">= 18.0°C"));
 
+        // WET_SOIL (> 65%)
         boolean soilWet = (soil != null && soil > 65.0) || cleanLock.equals("SOIL") || cleanLock.equals("4");
         String soilWetReading = "Substrate Moisture: " + (soil != null ? Math.round(soil) + "%" : "> 65%");
         am.evaluate("WET_SOIL", Level.CRITICAL, soilWet, 0L, soilWetReading, "Substrate Moisture: " + (soil != null ? Math.round(soil) + "%" : "<= 65%"));
 
+        // DRY_SOIL (< 40%)
         boolean soilDry = (soil != null && soil < 40.0);
         String soilDryReading = "Substrate Moisture: " + (soil != null ? Math.round(soil) + "%" : "< 40%");
         am.evaluate("DRY_SOIL", Level.WARN, soilDry, 0L, soilDryReading, "Substrate Moisture: " + (soil != null ? Math.round(soil) + "%" : ">= 40%"));
 
+        // HUMID_AIR (> 70%)
         boolean airHumid = (rh != null && rh > 70.0);
         String rhReading = "Chamber Humidity: " + (rh != null ? String.format("%.1f", rh) + "%" : "> 70%");
         am.evaluate("HUMID_AIR", Level.WARN, airHumid, 0L, rhReading, "Chamber Humidity: " + (rh != null ? String.format("%.1f", rh) + "%" : "<= 70%"));
 
+        // SENSOR_FAULT / DHT_FAULT
         boolean sensorFault = !sensorOk || !dhtOk || cleanLock.equals("SENSORS") || cleanLock.equals("DHT") || cleanLock.equals("1") || cleanLock.equals("2");
         String sensorMsg = !dhtOk ? "DHT11 communication timeout or detached probe." : "Substrate/Reservoir analog sensor channel disconnected.";
         am.evaluate("SENSOR_FAULT", Level.CRITICAL, sensorFault, 0L, sensorMsg, "All sensor probes operational and transmitting nominal values.");
 
+        // 5. Manual Mode Duration Reminder
         if ("MANUAL".equals(cleanMode) && manualModeStartTime > 0L) {
             long elapsed = now - manualModeStartTime;
             if (elapsed >= 7_200_000L && manualRemindersSent < 3) {

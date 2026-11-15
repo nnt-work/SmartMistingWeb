@@ -14,6 +14,9 @@
             padding: 0;
         }
 
+        /* =========================================================
+           1. GLOBAL BACKGROUND: LUXURY OBSIDIAN (DARK) -> CLEAR DAYLIGHT (LIGHT)
+           ========================================================= */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #08090b;
@@ -28,6 +31,7 @@
             transition: background-color 0.9s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
+        /* Luxury Dark Mode: Obsidian black & deep smoke palette */
         body::before {
             content: '';
             position: absolute;
@@ -38,6 +42,7 @@
             transition: opacity 0.9s ease;
         }
 
+        /* Light Mode: Morning mist background with soft contrast for 3D elements */
         body::after {
             content: '';
             position: absolute;
@@ -53,13 +58,14 @@
             opacity: 1;
         }
 
+        /* Light bridge and mist dispersion from 3D Terrarium to Login Glass */
         .ambient-mist-bridge {
             position: absolute;
             width: 980px;
             height: 520px;
-            background: radial-gradient(ellipse 65% 55% at 44% 48%,
-                rgba(56, 189, 248, 0.22) 0%,
-                rgba(16, 185, 129, 0.12) 45%,
+            background: radial-gradient(ellipse 65% 55% at 44% 48%, 
+                rgba(56, 189, 248, 0.22) 0%, 
+                rgba(16, 185, 129, 0.12) 45%, 
                 rgba(255, 255, 255, 0) 75%);
             filter: blur(28px);
             opacity: 0;
@@ -72,6 +78,7 @@
             opacity: 1;
         }
 
+        /* Main interactive stage connecting both panels */
         .stage-layout {
             width: 100%;
             max-width: 1000px;
@@ -83,6 +90,7 @@
             z-index: 5;
         }
 
+        /* Stage canvas for mist dispersion particles interacting with Login card */
         #interactiveBridgeCanvas {
             position: absolute;
             inset: -40px;
@@ -92,21 +100,24 @@
             z-index: 7;
         }
 
+        /* =========================================================
+           2. LEFT: 3D SMART MISTING TERRARIUM MODEL
+           ========================================================= */
         .terrarium-pod {
             position: relative;
             width: 470px;
             height: 500px;
             border-radius: 24px;
-
-            background: linear-gradient(180deg,
-                rgba(24, 26, 31, 0.92) 0%,
-                rgba(15, 17, 21, 0.96) 68%,
+            /* Idle state (Obsidian Glass): Deep smoke glass */
+            background: linear-gradient(180deg, 
+                rgba(24, 26, 31, 0.92) 0%, 
+                rgba(15, 17, 21, 0.96) 68%, 
                 rgba(10, 11, 14, 0.99) 100%);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1.5px solid rgba(255, 255, 255, 0.1);
             border-top: 1.5px solid rgba(255, 255, 255, 0.22);
-            box-shadow:
+            box-shadow: 
                 0 28px 56px -12px rgba(0, 0, 0, 0.9),
                 inset 0 1px 2px rgba(255, 255, 255, 0.12),
                 inset 0 -12px 28px rgba(0, 0, 0, 0.6);
@@ -115,7 +126,7 @@
             cursor: pointer;
             user-select: none;
             z-index: 5;
-            transition:
+            transition: 
                 background 0.85s cubic-bezier(0.16, 1, 0.3, 1),
                 border-color 0.85s ease,
                 box-shadow 0.85s ease,
@@ -127,40 +138,43 @@
             border-color: rgba(255, 255, 255, 0.24);
         }
 
+        /* Active state (Light Glass 3D): Illuminated interior showing mist and nozzles */
         body.mist-on .terrarium-pod {
-            background: linear-gradient(180deg,
-                rgba(235, 245, 252, 0.94) 0%,
-                rgba(220, 237, 248, 0.88) 58%,
+            background: linear-gradient(180deg, 
+                rgba(235, 245, 252, 0.94) 0%, 
+                rgba(220, 237, 248, 0.88) 58%, 
                 rgba(205, 229, 244, 0.94) 100%);
             border: 2px solid #ffffff;
-            box-shadow:
+            box-shadow: 
                 0 28px 55px -12px rgba(15, 23, 42, 0.18),
                 16px 0 40px -10px rgba(2, 132, 199, 0.18),
                 inset 0 2px 10px #ffffff,
                 inset 0 -10px 24px rgba(2, 132, 199, 0.1);
         }
 
+        /* Front 3D glass reflection layer */
         .terrarium-glass-reflection {
             position: absolute;
             inset: 0;
-            background: linear-gradient(130deg,
-                rgba(255, 255, 255, 0.12) 0%,
-                rgba(255, 255, 255, 0.02) 32%,
-                transparent 50%,
+            background: linear-gradient(130deg, 
+                rgba(255, 255, 255, 0.12) 0%, 
+                rgba(255, 255, 255, 0.02) 32%, 
+                transparent 50%, 
                 rgba(255, 255, 255, 0.06) 100%);
             pointer-events: none;
             z-index: 6;
         }
 
+        /* Overhead LED grow-light illumination beam */
         .led-sunbeam {
             position: absolute;
             top: 22px;
             left: 20px;
             width: 230px;
             height: 340px;
-            background: radial-gradient(ellipse at 50% 0%,
-                rgba(253, 224, 71, 0.45) 0%,
-                rgba(254, 240, 138, 0.22) 52%,
+            background: radial-gradient(ellipse at 50% 0%, 
+                rgba(253, 224, 71, 0.45) 0%, 
+                rgba(254, 240, 138, 0.22) 52%, 
                 transparent 78%);
             opacity: 0;
             transition: opacity 0.7s ease;
@@ -172,6 +186,7 @@
             opacity: 1;
         }
 
+        /* Volumetric mist spray cone from nozzle */
         .nozzle-mist-cone {
             position: absolute;
             top: 72px;
@@ -198,6 +213,7 @@
             transform: translateX(-50%) scale(1);
         }
 
+        /* Overhead hardware: Wooden lid, LED bar, misting nozzle and tubing */
         .hardware-header-svg {
             position: absolute;
             top: 0;
@@ -284,14 +300,17 @@
             pointer-events: none;
         }
 
+        /* =========================================================
+           3. RIGHT: PRECISION LOGIN GLASS CONTAINER
+           ========================================================= */
         .login-card {
             width: 100%;
             max-width: 420px;
             padding: 38px 34px;
-
-            background: linear-gradient(135deg,
-                rgba(255, 255, 255, 0.9) 0%,
-                rgba(248, 252, 255, 0.8) 55%,
+            /* High-contrast multi-layer glass panel */
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.9) 0%, 
+                rgba(248, 252, 255, 0.8) 55%, 
                 rgba(240, 249, 255, 0.86) 100%);
             backdrop-filter: blur(28px) saturate(190%);
             -webkit-backdrop-filter: blur(28px) saturate(190%);
@@ -299,7 +318,7 @@
             border-left: 2.5px solid #ffffff;
             border-top: 2px solid #ffffff;
             border-radius: 20px;
-            box-shadow:
+            box-shadow: 
                 0 25px 50px -12px rgba(15, 23, 42, 0.16),
                 -12px 0 32px -8px rgba(2, 132, 199, 0.15),
                 inset 0 2px 4px #ffffff,
@@ -308,17 +327,19 @@
             z-index: 6;
             overflow: hidden;
 
+            /* Initial ambient display */
             opacity: 0;
             transform: translateX(-18px) scale(0.96);
             filter: blur(8px);
             pointer-events: none;
-            transition:
+            transition: 
                 opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
                 transform 0.65s cubic-bezier(0.16, 1, 0.3, 1),
                 filter 0.65s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 0.65s ease;
         }
 
+        /* Active illumination when misting actuates */
         body.mist-on .login-card {
             opacity: 1;
             transform: translateX(0) scale(1);
@@ -326,6 +347,7 @@
             pointer-events: auto;
         }
 
+        /* Subtle glass refraction along left edge */
         .login-card::before {
             content: '';
             position: absolute;
@@ -338,11 +360,12 @@
             z-index: 0;
         }
 
+        /* Condensation droplets on glass surface */
         .glass-dew {
             position: absolute;
             border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, #ffffff 0%, #bae6fd 55%, rgba(2, 132, 199, 0.4) 100%);
-            box-shadow:
+            box-shadow: 
                 0 2px 4px rgba(15, 23, 42, 0.16),
                 inset 0 1px 1px #ffffff;
             pointer-events: none;
@@ -384,7 +407,7 @@
             color: #059669;
             font-size: 1.7rem;
             margin-bottom: 12px;
-            box-shadow:
+            box-shadow: 
                 0 6px 16px rgba(16, 185, 129, 0.18),
                 inset 0 1px 2px #ffffff;
         }
@@ -436,6 +459,7 @@
             align-items: center;
         }
 
+        /* z-index: 3 ensures icon clarity over input background */
         .input-icon {
             position: absolute;
             left: 14px;
@@ -524,46 +548,55 @@
                 height: 430px;
             }
         }
-
-</style>
+    </style>
 </head>
 <body class="${(not empty errorMessage or not empty param.error) ? 'mist-on' : ''}">
 
+    <!-- Light mist bridge connecting Terrarium model to Login Glass -->
     <div class="ambient-mist-bridge"></div>
 
     <div class="stage-layout">
-
+        <!-- Canvas for mist particles interacting with Login glass surface -->
         <canvas id="interactiveBridgeCanvas"></canvas>
 
+        <!-- LEFT PANEL: 3D SMART MISTING TERRARIUM (CLICK TO TOGGLE MISTING) -->
         <div class="terrarium-pod" id="terrariumTrigger">
             <div class="terrarium-glass-reflection"></div>
             <div class="led-sunbeam"></div>
             <div class="nozzle-mist-cone"></div>
 
+            <!-- Realistic LED grow-lights, 3D manifold & misting nozzle -->
             <svg class="hardware-header-svg" viewBox="0 0 470 150" xmlns="http://www.w3.org/2000/svg">
-
+                <!-- Terrarium wooden top lid frame -->
                 <rect x="0" y="0" width="470" height="16" class="roof-wood-bar" />
                 <line x1="0" y1="16" x2="470" y2="16" stroke="rgba(0,0,0,0.22)" stroke-width="1.5" />
 
+                <!-- Full-spectrum photosynthetic LED array -->
                 <rect x="38" y="16" width="140" height="7" rx="2" fill="#3f4452" />
                 <rect x="46" y="23" width="124" height="6" rx="3" class="led-lamp-tube" />
 
+                <!-- 3-layer clear water feed manifold -->
                 <path d="M 475 128 Q 368 52 266 47" fill="none" class="pipe-outer-wall" stroke-width="14" stroke-linecap="round" />
                 <path d="M 475 128 Q 368 52 266 47" fill="none" class="pipe-inner-wall" stroke-width="11" stroke-linecap="round" />
                 <path d="M 475 128 Q 368 52 266 47" fill="none" class="pipe-water-core" stroke-width="7" stroke-linecap="round" />
 
+                <!-- Manifold mounting bracket -->
                 <rect x="255" y="40" width="14" height="14" rx="3" class="nozzle-housing" stroke-width="1.4" />
 
+                <!-- Cylindrical brass misting nozzle -->
                 <rect x="228" y="16" width="14" height="12" fill="#475569" />
                 <rect x="209" y="26" width="52" height="44" rx="9" class="nozzle-housing" stroke-width="1.6" />
                 <line x1="216" y1="48" x2="254" y2="48" class="nozzle-ring-indicator" stroke-width="2.5" stroke-linecap="round" />
 
+                <!-- Precision atomization orifice -->
                 <rect x="217" y="69" width="36" height="4" rx="2" fill="#0284c7" />
             </svg>
 
+            <!-- Canvas for 3D Terrarium chamber, substrate, flora and mist -->
             <canvas id="terrariumCanvas"></canvas>
         </div>
 
+        <!-- RIGHT PANEL: TRANSLUCENT GLASS LOGIN INTERFACE -->
         <div class="login-card">
             <span class="glass-dew dew-1"></span>
             <span class="glass-dew dew-2"></span>
@@ -625,6 +658,7 @@
             const terrariumTrigger = document.getElementById('terrariumTrigger');
             const usernameInput = document.getElementById('usernameInput');
 
+            // Canvas 1: Terrarium interior (Substrate, botanical flora, spray cones)
             const tCanvas = document.getElementById('terrariumCanvas');
             const tCtx = tCanvas.getContext('2d');
             const W = 470;
@@ -634,6 +668,7 @@
             tCanvas.height = H * dpr;
             tCtx.scale(dpr, dpr);
 
+            // Canvas 2: Particle bridge (Mist particles dispersing toward Login card)
             const bCanvas = document.getElementById('interactiveBridgeCanvas');
             const bCtx = bCanvas.getContext('2d');
             const BW = 1080;
@@ -657,6 +692,7 @@
                 return 'rgb(' + r + ',' + g + ',' + b + ')';
             }
 
+            // 1. Broadleaf botanical plant cluster
             const broadPlants = [
                 { x: 65,  y: 442, scale: 0.92, angle: -0.36, phase: 0.3 },
                 { x: 115, y: 438, scale: 1.12, angle: -0.14, phase: 1.2 },
@@ -668,6 +704,7 @@
                 { x: 405, y: 442, scale: 0.90, angle: 0.34,  phase: 1.8 }
             ];
 
+            // 2. Multi-layer 340-blade grass substrate
             const grassBlades = [];
             const TOTAL_GRASS = 340;
             for (let i = 0; i < TOTAL_GRASS; i++) {
@@ -690,6 +727,7 @@
                 });
             }
 
+            // 3. High-definition volumetric misting spray system
             const WATER_HEX = ['#0369A1', '#0284C7', '#0EA5E9', '#38BDF8', '#7DD3FC'];
             const sprayDrops = [];
             const splashes = [];
@@ -727,6 +765,7 @@
                 };
             }
 
+            // Render 3D perspective wireframe of terrarium glass
             function draw3DChamberLines(t) {
                 tCtx.save();
                 tCtx.strokeStyle = t > 0.5 ? 'rgba(15, 23, 42, 0.07)' : 'rgba(255, 255, 255, 0.05)';
@@ -746,6 +785,7 @@
                 const sway = Math.sin(tick * 0.022 + plant.phase) * 0.045;
                 const wilt = (1 - t) * 0.18;
 
+                // Dark Mode: Deep olive foliage -> Light Mode: Vibrant emerald flora
                 const leafMain = mixRGB(92, 98, 52, 16, 185, 129, t);
                 const leafShadow = mixRGB(68, 74, 38, 5, 150, 105, t);
                 const veinColor = mixRGB(132, 140, 76, 167, 243, 208, t);
@@ -835,6 +875,7 @@
                 tCtx.save();
                 tCtx.globalAlpha = 1.0;
 
+                // Organic substrate bed
                 tCtx.fillStyle = mixRGB(38, 32, 27, 72, 54, 40, t);
                 tCtx.beginPath();
                 tCtx.moveTo(0, 440);
@@ -845,6 +886,7 @@
                 tCtx.closePath();
                 tCtx.fill();
 
+                // Defined wooden border fence
                 const pickets = 15;
                 const step = W / pickets;
                 const fenceFill = mixRGB(64, 70, 80, 255, 255, 255, t);
@@ -875,6 +917,7 @@
                     tCtx.stroke();
                 }
 
+                // Heavy wooden base platform
                 tCtx.fillStyle = mixRGB(30, 33, 40, 204, 163, 118, t);
                 tCtx.fillRect(0, 486, W, 14);
                 tCtx.restore();
@@ -893,6 +936,7 @@
 
                 draw3DChamberLines(hydration);
 
+                // Render background grass, flora, and foreground grass layers
                 for (let i = 0; i < grassBlades.length; i++) {
                     if (grassBlades[i].layer === 0) drawGrass(grassBlades[i], hydration);
                 }
@@ -903,6 +947,7 @@
                     if (grassBlades[i].layer > 0) drawGrass(grassBlades[i], hydration);
                 }
 
+                // Spawn atomized droplets inside terrarium chamber
                 if (isMisting && sprayDrops.length < 175) {
                     for (let i = 0; i < 6; i++) {
                         sprayDrops.push(createSprayDrop());
@@ -974,6 +1019,7 @@
 
                 drawTerrariumBase(hydration);
 
+                // Render drifting mist particles connecting terrarium to login panel
                 if (isMisting && bridgeMist.length < 45) {
                     bridgeMist.push(createBridgeParticle());
                 }
@@ -1012,6 +1058,7 @@
 
             requestAnimationFrame(animateAll);
 
+            // Toggle misting and theme lighting when model is clicked
             terrariumTrigger.addEventListener('click', function () {
                 isMisting = body.classList.toggle('mist-on');
                 if (isMisting && usernameInput) {
@@ -1021,7 +1068,6 @@
                 }
             });
         })();
-
-</script>
+    </script>
 </body>
 </html>

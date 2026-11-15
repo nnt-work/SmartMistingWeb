@@ -6,3 +6,10 @@ temp_*
 *.log
 *.class
 
+# Local configuration containing credentials
+prj_sm_config.properties
+src/java/prj_sm_config.properties
+web/WEB-INF/classes/
+
+# Embedded server bundle (graded machines use local Tomcat 9 installation)
+lib/tomcat-server/

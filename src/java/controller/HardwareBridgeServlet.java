@@ -1,7 +1,7 @@
 package controller;
 import dao.*;import model.*;import util.Json;import java.io.*;import java.util.*;
 import javax.servlet.annotation.WebServlet;import javax.servlet.http.*;
-
+/** One logged-in browser owns a short device lease and dispatches pending commands over USB. */
 @WebServlet(name="HardwareBridgeServlet",urlPatterns={"/api/bridge"})
 public class HardwareBridgeServlet extends HttpServlet {
  private static final Map<Integer,String> owners=new HashMap<>();private static final Map<Integer,Long> leases=new HashMap<>();

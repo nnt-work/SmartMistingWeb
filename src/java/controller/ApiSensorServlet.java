@@ -209,10 +209,12 @@ public class ApiSensorServlet extends HttpServlet {
             String lock = m.containsKey("lock_reason") ? m.get("lock_reason") : m.get("lock");
             if (lock == null) lock = "NONE";
 
+            // 1. Process Telemetry and Live SCADA Notifications IMMEDIATELY
             if (!isSample) {
                 AlertService.getInstance().onTelemetry(id, soil, rh, temp, water, waterOk, sensorOk, dhtOk, pumpOn, mode, lock);
             }
 
+            // 2. Safe Database Persistence (non-blocking for alerts)
             try {
                 SensorReading r = new SensorReading();
                 r.setDeviceId(id);
@@ -235,7 +237,7 @@ public class ApiSensorServlet extends HttpServlet {
                 dao.addReading(r);
                 new DeviceDAO().updateLastSeen(id);
             } catch (Exception dbEx) {
-
+                // DB logging warning only - telemetry and alerts remain fully operational
                 System.out.println("[ApiSensorServlet] DB persistence note: " + dbEx.getMessage());
             }
 

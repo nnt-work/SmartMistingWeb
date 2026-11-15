@@ -1,16 +1,115 @@
 package controller;
-import dao.*;import model.*;import util.Json;import javax.servlet.annotation.WebServlet;import javax.servlet.http.*;import javax.servlet.*;import java.io.*;
-@WebServlet(name="SettingServlet",urlPatterns={"/admin/settings","/settings"})
+
+import dao.ActivityLogDAO;
+import dao.ControlCommandDAO;
+import dao.MistingSettingDAO;
+import java.io.IOException;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import model.AppUser;
+import model.ControlCommand;
+import model.MistingSetting;
+import util.Json;
+
+/**
+ * Controller servlet for reading and configuring misting thresholds,
+ * cycle timing, and operating modes.
+ */
+@WebServlet(name = "SettingServlet", urlPatterns = {"/admin/settings", "/settings"})
 public class SettingServlet extends HttpServlet {
- protected void doGet(HttpServletRequest q,HttpServletResponse p)throws IOException,ServletException{q.setAttribute("activeNav","settings");q.getRequestDispatcher("/dashboard").forward(q,p);}
- protected void doPost(HttpServletRequest q,HttpServletResponse p)throws IOException{
-  try{int id=Integer.parseInt(q.getParameter("device_id")==null?"1":q.getParameter("device_id"));MistingSettingDAO dao=new MistingSettingDAO();MistingSetting s=dao.getSettingByDeviceId(id);if(s==null)throw new IllegalArgumentException("Device settings not found");
-   if("save_duration".equals(q.getParameter("action"))){int sec=Integer.parseInt(q.getParameter("max_run_sec"));if(sec<1||sec>600)throw new IllegalArgumentException("Manual pulse duration must be 1 to 600 seconds");dao.updateMaxRunSec(id,sec);Json.send(p,200,Json.map("status","success","max_run_sec",sec));return;}
-   double on=Double.parseDouble(q.getParameter("humidity_on")),off=Double.parseDouble(q.getParameter("humidity_off"));int duration=Integer.parseInt(q.getParameter("max_run_sec")),cool=Integer.parseInt(q.getParameter("cooldown_sec"));String mode=q.getParameter("desired_mode");
-   if(!Double.isFinite(on)||!Double.isFinite(off)||on!=Math.rint(on)||off!=Math.rint(off)||on<1||on>=off||off>100||duration<1||duration>600||cool<0||cool>600||(!"AUTO".equals(mode)&&!"MANUAL".equals(mode)))throw new IllegalArgumentException("Use integer RH bounds 1 <= on < off <= 100, pulse 1 to 600 seconds, cooldown 0 to 600");
-   s.setHumidityOn(on);s.setHumidityOff(off);s.setMaxRunSec(duration);s.setCooldownSec(cool);s.setDesiredMode(mode);if(!dao.updateSetting(s))throw new IllegalArgumentException("Settings not updated");
-   AppUser u=(AppUser)q.getSession().getAttribute("user");ControlCommand c=new ControlCommand();c.setDeviceId(id);c.setUserId(u.getUserId());c.setCommandType("SYNC_SETTING");c.setPayloadJson(Json.stringify(Json.map("on",(int)on,"off",(int)off,"mode",mode)));c.setStatus("PENDING");int cid=new ControlCommandDAO().createCommand(c);
-   new ActivityLogDAO().log("ADMIN",id,u.getUserId(),cid,"SETTING_UPDATE","Air RH "+on+" to "+off+"; AUTO continuous; manual pulse="+duration+"s");Json.send(p,200,Json.map("status","success","command_id",cid,"message","Saved to database. Hardware sync pending; connect USB bridge."));
-  }catch(IllegalArgumentException e){Json.send(p,400,Json.map("status","error","message",e.getMessage()));}catch(Exception e){getServletContext().log("Settings failed",e);Json.send(p,503,Json.map("status","error","message","Settings not saved. Check SQL Server."));}
- }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+        request.setAttribute("activeNav", "settings");
+        request.getRequestDispatcher("/dashboard").forward(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        try {
+            int deviceId = Integer.parseInt(
+                    request.getParameter("device_id") == null ? "1" : request.getParameter("device_id")
+            );
+            MistingSettingDAO dao = new MistingSettingDAO();
+            MistingSetting setting = dao.getSettingByDeviceId(deviceId);
+            if (setting == null) {
+                throw new IllegalArgumentException("Device settings not found");
+            }
+
+            if ("save_duration".equals(request.getParameter("action"))) {
+                int sec = Integer.parseInt(request.getParameter("max_run_sec"));
+                if (sec < 1 || sec > 600) {
+                    throw new IllegalArgumentException("Manual pulse duration must be between 1 and 600 seconds");
+                }
+                dao.updateMaxRunSec(deviceId, sec);
+                Json.send(response, 200, Json.map("status", "success", "max_run_sec", sec));
+                return;
+            }
+
+            double humOn = Double.parseDouble(request.getParameter("humidity_on"));
+            double humOff = Double.parseDouble(request.getParameter("humidity_off"));
+            int duration = Integer.parseInt(request.getParameter("max_run_sec"));
+            int cooldown = Integer.parseInt(request.getParameter("cooldown_sec"));
+            String mode = request.getParameter("desired_mode");
+
+            if (!Double.isFinite(humOn) || !Double.isFinite(humOff)
+                    || humOn != Math.rint(humOn) || humOff != Math.rint(humOff)
+                    || humOn < 1 || humOn >= humOff || humOff > 100
+                    || duration < 1 || duration > 600 || cooldown < 0 || cooldown > 600
+                    || (!"AUTO".equals(mode) && !"MANUAL".equals(mode))) {
+                throw new IllegalArgumentException(
+                        "Use integer RH bounds 1 <= on < off <= 100, pulse 1 to 600 seconds, cooldown 0 to 600"
+                );
+            }
+
+            setting.setHumidityOn(humOn);
+            setting.setHumidityOff(humOff);
+            setting.setMaxRunSec(duration);
+            setting.setCooldownSec(cooldown);
+            setting.setDesiredMode(mode);
+
+            if (!dao.updateSetting(setting)) {
+                throw new IllegalArgumentException("Settings could not be updated in database");
+            }
+
+            AppUser user = (AppUser) request.getSession().getAttribute("user");
+            ControlCommand cmd = new ControlCommand();
+            cmd.setDeviceId(deviceId);
+            cmd.setUserId(user.getUserId());
+            cmd.setCommandType("SYNC_SETTING");
+            cmd.setPayloadJson(Json.stringify(Json.map(
+                    "on", (int) humOn,
+                    "off", (int) humOff,
+                    "mode", mode
+            )));
+            cmd.setStatus("PENDING");
+
+            int commandId = new ControlCommandDAO().createCommand(cmd);
+
+            new ActivityLogDAO().log(
+                    "ADMIN",
+                    deviceId,
+                    user.getUserId(),
+                    commandId,
+                    "SETTING_UPDATE",
+                    "Air RH " + humOn + " to " + humOff + "; AUTO continuous; manual pulse=" + duration + "s"
+            );
+
+            Json.send(response, 200, Json.map(
+                    "status", "success",
+                    "command_id", commandId,
+                    "message", "Saved to database. Hardware sync pending; connect USB bridge."
+            ));
+
+        } catch (IllegalArgumentException e) {
+            Json.send(response, 400, Json.map("status", "error", "message", e.getMessage()));
+        } catch (Exception e) {
+            getServletContext().log("Settings update failed", e);
+            Json.send(response, 503, Json.map("status", "error", "message", "Settings not saved. Check SQL Server."));
+        }
+    }
 }

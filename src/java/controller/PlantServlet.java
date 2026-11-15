@@ -50,6 +50,7 @@ public class PlantServlet extends HttpServlet {
             request.setAttribute("totalCount", totalPlants);
             request.setAttribute("searchKeyword", keyword);
 
+            // Pop flash messages if any
             HttpSession session = request.getSession(false);
             if (session != null) {
                 if (session.getAttribute("flashSuccess") != null) {
@@ -85,6 +86,7 @@ public class PlantServlet extends HttpServlet {
             return;
         }
 
+        // RBAC validation: Only ADMIN and STAFF can add/edit/delete
         if (user.isViewer()) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "VIEWER role is not authorized to modify plant data!");
             return;

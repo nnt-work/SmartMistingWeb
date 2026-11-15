@@ -12,6 +12,7 @@ import java.util.List;
 
 public class SensorReadingDAO {
 
+    // Shared SELECT column list to keep queries consistent
     private static final String SELECT_COLS =
         "r.reading_id, r.device_id, r.packet_id, r.temperature_c, r.humidity_pct, "
         + "r.water_ok, r.sensor_ok, r.reported_mode, r.pump_on, r.applied_version, "
@@ -116,7 +117,7 @@ public class SensorReadingDAO {
             if (r.getAppliedVersion() != null) ps.setInt(9, r.getAppliedVersion());     else ps.setNull(9,  java.sql.Types.INTEGER);
             ps.setBoolean(10, r.isIsSample());
             if (r.getIsRaining()      != null) ps.setBoolean(11, r.getIsRaining());     else ps.setNull(11, java.sql.Types.BOOLEAN);
-
+            // DHT11 ambient air climate sensor columns (nullable)
             if (r.getAirTemperature() != null) ps.setDouble(12, r.getAirTemperature()); else ps.setNull(12, java.sql.Types.DOUBLE);
             if (r.getAirHumidity()    != null) ps.setDouble(13, r.getAirHumidity());    else ps.setNull(13, java.sql.Types.DOUBLE);
             ps.setBoolean(14, Boolean.TRUE.equals(r.getDhtOk()));
@@ -129,6 +130,9 @@ public class SensorReadingDAO {
         }
     }
 
+    // Maps a ResultSet row to a SensorReading object.
+    // DHT11 columns (air_temperature, air_humidity) are wrapped in try/catch for backward
+    // compatibility with older database installs that have not yet run the migration script.
     private SensorReading mapResultSetToReading(ResultSet rs) throws SQLException {
         SensorReading r = new SensorReading();
         r.setReadingId(rs.getLong("reading_id"));
@@ -158,13 +162,14 @@ public class SensorReadingDAO {
         boolean raining = rs.getBoolean("is_raining");
         if (!rs.wasNull()) r.setIsRaining(raining);
 
+        // DHT11 air climate sensor columns
         try {
             double airTemp = rs.getDouble("air_temperature");
             if (!rs.wasNull()) r.setAirTemperature(airTemp);
             double airHum = rs.getDouble("air_humidity");
             if (!rs.wasNull()) r.setAirHumidity(airHum);
         } catch (java.sql.SQLException ignored) {
-
+            // Columns may not exist in older database installs - silently skip
         }
 
         r.setDhtOk(rs.getBoolean("dht_ok"));

@@ -1,4 +1,4 @@
-
+-- Rerunnable classroom seed. Password for seed users: 12345.
 USE MistingDB;
 GO
 IF NOT EXISTS(SELECT 1 FROM AppUser WHERE username='admin01')
@@ -18,15 +18,15 @@ IF NOT EXISTS(SELECT 1 FROM MistingSetting WHERE device_id=1)
 IF NOT EXISTS(SELECT 1 FROM Plant WHERE plant_name=N'Jewel Orchid Terrarium')
  INSERT Plant(plant_name,species,humidity_on,humidity_off,note,created_by) SELECT N'Jewel Orchid Terrarium',N'Classroom jewel orchid model',60,70,N'Project RH thresholds; soil and water use independent safety gates.',user_id FROM AppUser WHERE username='admin01';
 GO
-
+-- Convert old soil-based default bounds to the integrated air RH defaults.
 UPDATE MistingSetting SET humidity_on=60,humidity_off=70,cooldown_sec=0,version=version+1
 WHERE device_id=1 AND humidity_on IN (40,50) AND humidity_off=65;
 GO
-
+-- Convert old soil-based default bounds to the integrated air RH defaults.
 UPDATE MistingSetting SET humidity_on=60,humidity_off=70,cooldown_sec=0,version=version+1
 WHERE device_id=1 AND humidity_on IN (40,50) AND humidity_off=65;
 GO
-
+-- 100 labeled historical sample readings. Samples never authorize physical START.
 DECLARE @i int=1;
 WHILE @i<=100
 BEGIN
@@ -35,7 +35,7 @@ BEGIN
  VALUES(1,CONCAT('DEMO-SEED-',@i),26,45+(@i%10),80,1,1,'AUTO',CASE WHEN @i%10<5 THEN 1 ELSE 0 END,1,0,26,55+(@i%20),1,'NONE',DATEADD(minute,-(101-@i),SYSDATETIME()));
  SET @i=@i+1;
 END;
-
+-- 10 paired sample misting sessions in the audit trail.
 SET @i=1;
 WHILE @i<=10
 BEGIN
@@ -46,7 +46,7 @@ BEGIN
  SET @i=@i+1;
 END;
 GO
-
+-- Normalized role matrix used by the DAO and filter. Existing decisions are preserved.
 INSERT RolePermission(role_code,module_code,can_access)
 SELECT r.role_code,m.module_code,CASE WHEN r.role_code='ADMIN' THEN 1 WHEN r.role_code='STAFF' AND m.module_code NOT IN ('USER_MANAGEMENT','DEVICE_MANAGEMENT') THEN 1 WHEN r.role_code='VIEWER' AND m.module_code IN ('DASHBOARD','LOGS_EXPORT') THEN 1 ELSE 0 END
 FROM (VALUES('ADMIN'),('STAFF'),('VIEWER'))r(role_code)

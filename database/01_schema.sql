@@ -1,11 +1,12 @@
-
+-- PRJ301 Smart Misting. SQL Server 2019. Non-destructive, rerunnable setup.
+-- This script preserves existing data. No DROP DATABASE or DELETE is performed.
 USE master;
 GO
 IF DB_ID(N'MistingDB') IS NULL EXEC(N'CREATE DATABASE MistingDB');
 GO
 USE MistingDB;
 GO
-
+-- 1. AppUser – System Users & Credentials (MD5 Hashed)
 IF OBJECT_ID(N'dbo.AppUser',N'U') IS NULL
 CREATE TABLE AppUser (
     user_id        INT IDENTITY(1,1) PRIMARY KEY,
@@ -13,7 +14,7 @@ CREATE TABLE AppUser (
     password_hash  NVARCHAR(256) NOT NULL,
     full_name      NVARCHAR(100) NOT NULL,
     email          NVARCHAR(100),
-    role_code      NVARCHAR(10)  NOT NULL
+    role_code      NVARCHAR(10)  NOT NULL 
                    CHECK (role_code IN ('ADMIN','STAFF','VIEWER')),
     status_text    NVARCHAR(100) DEFAULT 'Active',
     is_locked      BIT NOT NULL DEFAULT 0,
@@ -22,6 +23,7 @@ CREATE TABLE AppUser (
     updated_at     DATETIME2 DEFAULT SYSDATETIME()
 );
 
+-- 2. Plant – Botanical Profiles & Optimal Irrigation Ranges
 IF OBJECT_ID(N'dbo.Plant',N'U') IS NULL
 CREATE TABLE Plant (
     plant_id      INT IDENTITY(1,1) PRIMARY KEY,
@@ -36,6 +38,7 @@ CREATE TABLE Plant (
     created_at    DATETIME2 DEFAULT SYSDATETIME()
 );
 
+-- 3. Device – Microcontroller Units (Arduino Uno / Nano)
 IF OBJECT_ID(N'dbo.Device',N'U') IS NULL
 CREATE TABLE Device (
     device_id    INT IDENTITY(1,1) PRIMARY KEY,
@@ -46,6 +49,7 @@ CREATE TABLE Device (
     is_active    BIT NOT NULL DEFAULT 1
 );
 
+-- 4. MistingSetting – Automated Thresholds & Safety Limits
 IF OBJECT_ID(N'dbo.MistingSetting',N'U') IS NULL
 CREATE TABLE MistingSetting (
     device_id      INT PRIMARY KEY REFERENCES Device(device_id),
@@ -59,6 +63,7 @@ CREATE TABLE MistingSetting (
     updated_at     DATETIME2 DEFAULT SYSDATETIME()
 );
 
+-- 5. SensorReading – Telemetry Stream from Sensors
 IF OBJECT_ID(N'dbo.SensorReading',N'U') IS NULL
 CREATE TABLE SensorReading (
     reading_id       BIGINT IDENTITY(1,1) PRIMARY KEY,
@@ -77,13 +82,14 @@ CREATE TABLE SensorReading (
     is_raining       BIT NOT NULL DEFAULT 0,
     water_pct        FLOAT NULL CHECK (water_pct BETWEEN 0 AND 100),
     lock_reason      NVARCHAR(30) NULL,
-    air_temperature  FLOAT NULL,
-    air_humidity     FLOAT NULL,
-    dht_ok           BIT NOT NULL DEFAULT 0,
-    heat_stress      BIT NOT NULL DEFAULT 0,
+    air_temperature  FLOAT NULL,                       -- Ambient air temperature from DHT11 (°C)
+    air_humidity     FLOAT NULL,                       -- Ambient air relative humidity from DHT11 (%)
+    dht_ok           BIT NOT NULL DEFAULT 0,           -- 1 when DHT11 sensor reading is valid
+    heat_stress      BIT NOT NULL DEFAULT 0,           -- 1 when thermal override (temp >= 38C) active
     CONSTRAINT UQ_device_packet UNIQUE (device_id, packet_id)
 );
 
+-- 6. ControlCommand – Actuator Commands & Feedback
 IF OBJECT_ID(N'dbo.ControlCommand',N'U') IS NULL
 CREATE TABLE ControlCommand (
     command_id    INT IDENTITY(1,1) PRIMARY KEY,
@@ -100,6 +106,7 @@ CREATE TABLE ControlCommand (
     dispatched_at DATETIME2
 );
 
+-- 7. ActivityLog – SCADA Audit Trail & Operations History
 IF OBJECT_ID(N'dbo.ActivityLog',N'U') IS NULL
 CREATE TABLE ActivityLog (
     log_id      BIGINT IDENTITY(1,1) PRIMARY KEY,
@@ -115,6 +122,7 @@ CREATE TABLE ActivityLog (
     is_sample   BIT NOT NULL DEFAULT 0
 );
 
+-- 8. RolePermission – Dynamic RBAC Access Control Matrix
 IF OBJECT_ID(N'dbo.RolePermission',N'U') IS NULL
 CREATE TABLE RolePermission (
     role_code       NVARCHAR(10) NOT NULL CHECK (role_code IN ('ADMIN','STAFF','VIEWER')),
@@ -124,6 +132,7 @@ CREATE TABLE RolePermission (
 );
 GO
 
+-- 9. Performance Indexes for Real-time SCADA Polling & Query Optimization
 IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='idx_sensor_device_time' AND object_id=OBJECT_ID('dbo.SensorReading'))
 CREATE INDEX idx_sensor_device_time ON SensorReading (device_id, reading_id DESC);
 CREATE INDEX idx_sensor_received    ON SensorReading (received_at DESC);

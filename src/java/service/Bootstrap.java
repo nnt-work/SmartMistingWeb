@@ -1,14 +1,135 @@
 package service;
-import util.Json;import model.*;import javax.servlet.http.*;import java.util.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import model.ActivityLog;
+import model.AppUser;
+import model.ControlCommand;
+import model.MistingSetting;
+import model.Plant;
+import model.SensorReading;
+import util.Json;
+
+/**
+ * Service utility to construct the initial client-side state payload
+ * for the Single-Page Application (SPA) dashboard view.
+ */
 public final class Bootstrap {
- public static String create(HttpServletRequest q,MistingSetting s,List<Plant>plants,List<AppUser>users,List<ControlCommand>cmds,List<SensorReading>readings,List<ActivityLog>logs){
-  AppUser u=(AppUser)q.getSession().getAttribute("user");Map<String,Object>m=Json.map("currentUserId",u.getUserId(),"currentUserRole",u.getRoleCode(),"currentUserName",u.getFullName(),"systemMode",s.getDesiredMode(),"activePlantId",plants.isEmpty()?0:plants.get(0).getPlantId(),"setting",Json.map("humOn",s.getHumidityOn(),"humOff",s.getHumidityOff(),"maxRun",s.getMaxRunSec(),"cooldown",s.getCooldownSec()));
-  List<Object>p=new ArrayList<>(),us=new ArrayList<>(),cs=new ArrayList<>(),rs=new ArrayList<>(),ls=new ArrayList<>();
-  for(Plant x:plants)p.add(Json.map("id",x.getPlantId(),"name",x.getPlantName(),"sci",x.getSpecies(),"min",x.getHumidityOn(),"max",x.getHumidityOff(),"burst",s.getMaxRunSec(),"notes",x.getNote()));
-  if(u.isAdmin())for(AppUser x:users)us.add(Json.map("id",x.getUserId(),"username",x.getUsername(),"fullName",x.getFullName(),"email",x.getEmail(),"role",x.getRoleCode(),"isLocked",x.isIsLocked(),"createdAt",x.getCreatedAt()));
-  for(ControlCommand x:cmds)cs.add(Json.map("time",x.getCreatedAt(),"mode","-","cmd",x.getCommandType(),"actor",x.getUsername(),"dur","-","tank","-","ack",x.getStatus()));
-  for(SensorReading x:readings)rs.add(Json.map("time",x.getReceivedAt(),"soil",x.getHumidityPct()==null?"--":x.getHumidityPct()+"%","tank",x.getWaterPercent()==null?"--":x.getWaterPercent()+"%","rain",x.getAirHumidity()==null?"--":x.getAirHumidity()+"%","status",x.isIsSample()?"SAMPLE":x.getLockReason()));
-  if(u.isAdmin())for(ActivityLog x:logs)ls.add(Json.map("time",x.getOccurredAt(),"action",x.getAction(),"detail",x.getDetail(),"user",x.getUsername(),"ip","-","sev","INFO"));
-  m.put("plants",p);m.put("users",us);m.put("history",Json.map("pump",cs,"sensor",rs,"audit",ls));return Json.stringify(m);
- }
+
+    private Bootstrap() {
+    }
+
+    /**
+     * Serializes initial dashboard bootstrap state into a JSON string.
+     *
+     * @param request HttpServletRequest for session inspection
+     * @param setting Current system misting settings
+     * @param plants List of active plant profiles
+     * @param users List of system users (for admin users)
+     * @param cmds Recent control commands
+     * @param readings Recent sensor telemetry readings
+     * @param logs Recent system activity logs
+     * @return Serialized JSON bootstrap payload
+     */
+    public static String create(HttpServletRequest request,
+                                MistingSetting setting,
+                                List<Plant> plants,
+                                List<AppUser> users,
+                                List<ControlCommand> cmds,
+                                List<SensorReading> readings,
+                                List<ActivityLog> logs) {
+
+        AppUser user = (AppUser) request.getSession().getAttribute("user");
+        Map<String, Object> map = Json.map(
+                "currentUserId", user.getUserId(),
+                "currentUserRole", user.getRoleCode(),
+                "currentUserName", user.getFullName(),
+                "systemMode", setting.getDesiredMode(),
+                "activePlantId", plants.isEmpty() ? 0 : plants.get(0).getPlantId(),
+                "setting", Json.map(
+                        "humOn", setting.getHumidityOn(),
+                        "humOff", setting.getHumidityOff(),
+                        "maxRun", setting.getMaxRunSec(),
+                        "cooldown", setting.getCooldownSec()
+                )
+        );
+
+        List<Object> plantList = new ArrayList<>();
+        for (Plant p : plants) {
+            plantList.add(Json.map(
+                    "id", p.getPlantId(),
+                    "name", p.getPlantName(),
+                    "sci", p.getSpecies(),
+                    "min", p.getHumidityOn(),
+                    "max", p.getHumidityOff(),
+                    "burst", setting.getMaxRunSec(),
+                    "notes", p.getNote()
+            ));
+        }
+
+        List<Object> userList = new ArrayList<>();
+        if (user.isAdmin()) {
+            for (AppUser u : users) {
+                userList.add(Json.map(
+                        "id", u.getUserId(),
+                        "username", u.getUsername(),
+                        "fullName", u.getFullName(),
+                        "email", u.getEmail(),
+                        "role", u.getRoleCode(),
+                        "isLocked", u.isIsLocked(),
+                        "createdAt", u.getCreatedAt()
+                ));
+            }
+        }
+
+        List<Object> commandList = new ArrayList<>();
+        for (ControlCommand c : cmds) {
+            commandList.add(Json.map(
+                    "time", c.getCreatedAt(),
+                    "mode", "-",
+                    "cmd", c.getCommandType(),
+                    "actor", c.getUsername(),
+                    "dur", "-",
+                    "tank", "-",
+                    "ack", c.getStatus()
+            ));
+        }
+
+        List<Object> readingList = new ArrayList<>();
+        for (SensorReading r : readings) {
+            readingList.add(Json.map(
+                    "time", r.getReceivedAt(),
+                    "soil", r.getHumidityPct() == null ? "--" : r.getHumidityPct() + "%",
+                    "tank", r.getWaterPercent() == null ? "--" : r.getWaterPercent() + "%",
+                    "rain", r.getAirHumidity() == null ? "--" : r.getAirHumidity() + "%",
+                    "status", r.isIsSample() ? "SAMPLE" : r.getLockReason()
+            ));
+        }
+
+        List<Object> logList = new ArrayList<>();
+        if (user.isAdmin()) {
+            for (ActivityLog l : logs) {
+                logList.add(Json.map(
+                        "time", l.getOccurredAt(),
+                        "action", l.getAction(),
+                        "detail", l.getDetail(),
+                        "user", l.getUsername(),
+                        "ip", "-",
+                        "sev", "INFO"
+                ));
+            }
+        }
+
+        map.put("plants", plantList);
+        map.put("users", userList);
+        map.put("history", Json.map(
+                "pump", commandList,
+                "sensor", readingList,
+                "audit", logList
+        ));
+
+        return Json.stringify(map);
+    }
 }

@@ -32,6 +32,7 @@ public class HistoryServlet extends HttpServlet {
             tab = "misting";
         }
 
+        // Security check: If viewer/staff requests admin tab, fallback to misting
         if ("admin".equalsIgnoreCase(tab) && (user == null || !user.isAdmin())) {
             tab = "misting";
         }
@@ -42,7 +43,7 @@ public class HistoryServlet extends HttpServlet {
 
         try {
             List<ActivityLog> mistingLogs = logDAO.getLogs("MISTING", keyword, 50);
-
+            
             List<SensorReading> sensorReadings;
             if ((fromDate != null && !fromDate.trim().isEmpty()) || (toDate != null && !toDate.trim().isEmpty())) {
                 sensorReadings = sensorDAO.getReadingsByDateRange(1, fromDate, toDate, 100);
