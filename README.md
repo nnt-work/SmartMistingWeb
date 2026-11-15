@@ -11,11 +11,11 @@
 [![Hardware](https://img.shields.io/badge/Hardware-Arduino%20Uno%20R3-00979D?style=flat-square&logo=arduino&logoColor=white)](https://www.arduino.cc/)
 [![WebSerial](https://img.shields.io/badge/Standards-W3C%20WebSerial%20%26%20WebLocks-blue?style=flat-square)](https://wicg.github.io/serial/)
 [![Test Suite](https://img.shields.io/badge/Assertions-50%2F50%20PASS-brightgreen?style=flat-square)](tests/)
-[![Paper](https://img.shields.io/badge/Technical%20Paper-IEEE%20Format%20PDF-purple?style=flat-square)](SmartMisting.pdf)
+[![Paper](https://img.shields.io/badge/Technical%20Paper-IEEE%20Format%20PDF-purple?style=flat-square)](SmartMisting_Report.pdf)
 
 <br/>
 
-**[Technical Paper (PDF)](SmartMisting.pdf)** • **[Video Demonstration](VIDEO_DEMO.mp4)** • **[System Architecture](#-system-architecture)** • **[Empirical Results](#-empirical-evaluation-benchmarks-table-ii)** • **[Replication Guide](#-quickstart--replication-guide)**
+**[Technical Paper (PDF)](SmartMisting_Report.pdf)** • **[Video Demonstration](VIDEO_DEMO.mp4)** • **[System Architecture](#-system-architecture)** • **[Empirical Results](#-empirical-evaluation-benchmarks-table-ii)** • **[Replication Guide](#-quickstart--replication-guide)**
 
 <br/>
 
@@ -130,7 +130,7 @@ node tests/integration.test.js
 # Output: PASS 11 JavaScript integration assertions
 
 # 3. Microcontroller Protocol & Safety Interlock Tests (20 assertions)
-g++ -I tests/firmware/stubs tests/firmware/firmware_test.cpp -o tests/firmware/firmware_test
+g++ -std=c++11 -I tests/firmware/stubs tests/firmware/firmware_test.cpp -o tests/firmware/firmware_test
 ./tests/firmware/firmware_test
 # Output: PASS 20 firmware host assertions using actual .ino source (not AVR/board test)
 ```
@@ -193,7 +193,7 @@ g++ -I tests/firmware/stubs tests/firmware/firmware_test.cpp -o tests/firmware/f
 
 ```
 PRJ301_SmartMisting/
-├── SmartMisting.pdf                            # Technical Paper (IEEE Format)
+├── SmartMisting_Report.pdf                     # Technical Paper (Full Manuscript PDF)
 ├── VIDEO_DEMO.mp4                              # Prototype Demonstration Video
 ├── docs/                                       # High-resolution architectural diagrams
 │   └── img/
@@ -211,10 +211,6 @@ PRJ301_SmartMisting/
 │   └── FULL_DATABASE_SETUP.sql                 # Complete one-click database setup
 ├── hardware/
 │   └── Original_Wiring.drawio                  # Pinout wiring schematics
-├── report/
-│   ├── SmartMisting_Report.pdf                 # Full technical report PDF
-│   ├── PRJ301_Smart_Misting_Report.pdf         # Technical report copy
-│   └── PRJ301_Smart_Misting_Report.docx        # Technical report Word document
 ├── tests/
 │   ├── PolicyTest.java                         # Java policy, RBAC & JSON unit tests (19 assertions)
 │   ├── integration.test.js                     # SCADA WebSerial & logic integration tests (11 assertions)
@@ -243,7 +239,7 @@ PRJ301_SmartMisting/
 ---
 
 ## 📄 Reference & Documentation
-- **Technical Paper (Full Manuscript)**: [SmartMisting.pdf](SmartMisting.pdf)
+- **Technical Paper (Full Manuscript)**: [SmartMisting_Report.pdf](SmartMisting_Report.pdf)
 - **Live Video Demonstration**: [VIDEO_DEMO.mp4](VIDEO_DEMO.mp4)
 - **Primary References**:
   - W3C, *"Web Locks API: W3C Candidate Recommendation Snapshot"*, 2024. [https://www.w3.org/TR/web-locks/](https://www.w3.org/TR/web-locks/)
